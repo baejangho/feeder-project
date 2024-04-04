@@ -6,21 +6,42 @@ import time
 
 class Feeder_server:
     def __init__(self, ip, state_port, cmd_port):
-        
-        self.sock_list = []                             # event socket list
-        self.BUFFER = 4096                              # buffer max size
-        self.feeder_max_num = 10                        # max feeder num
-        self.feeder_full_list = ["F-01", "F-02", "F-03", "F-04", "F-05", "F-06", "F-07", "F-08", "F-09", "F-10"]
+        ## TCP/IP 기본 설정 ##
         self.server_ip = ip
         self.state_port = state_port
         self.cmd_port = cmd_port
-        self.info = {}
-        self.feeder_list = {}                           # {"ID":socket정보}
-        self.feeder_state_list = {}                     # {"ID":'connect'}
+        self.BUFFER = 4096                              # buffer max size
+        
+        ## 1:N TCP/IP 통신을 위한 변수 초기화 ##
+        self.feeder_max_num = 10                        # max feeder num      
+        # {"ID":{"feeder_ID":"F-01","feed_size":3},"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase}
+        self.info = {"F-01":{"feeder_ID":"F-01","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
+                    "F-02":{"feeder_ID":"F-02","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
+                    "F-03":{"feeder_ID":"F-03","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
+                    "F-04":{"feeder_ID":"F-04","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
+                    "F-05":{"feeder_ID":"F-05","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
+                    "F-06":{"feeder_ID":"F-06","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
+                    "F-07":{"feeder_ID":"F-07","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
+                    "F-08":{"feeder_ID":"F-08","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
+                    "F-09":{"feeder_ID":"F-09","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
+                    "F-10":{"feeder_ID":"F-10","feed_size":3,"remains":10,"feed_motor_ouput":0,\
+                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False}}
+                                                       
+        self.feeder_socket_list = {}                    # {"F-01":socket정보}
+        self.feeder_state_list = {}                     # {"F-01":True, "F-02":True, ... , "F-10":False}
         self.feeding_plan = {}                         
         # {"F-01":{'start time' : '09:00','pace' : 0,'spread':1.5, 'amount' : 1.5},'F-02':{'start time' : '16:00','pace' : 0,'spread':1.5, 'amount' : 1.5}}
-        for i in self.feeder_full_list:
-            self.feeder_state_list[i]= 'disconect'
+        for i in self.info:
+            self.feeder_state_list[i]= self.info[i]["connectitity"]
         print(self.feeder_state_list)
                                  
         self.initialize_socket()        
@@ -70,7 +91,8 @@ class Feeder_server:
                         data = json.loads(data)
                         #self.state_Queue[s].put(data)
                         #print('state :',data)
-                        self.info[data["feeder_ID"]] = data          
+                        self.info[data["feeder_ID"]] = data
+                        self.info_updata(data["feeder_ID"])
                     except:                                           # 연결이 종료되었는가?
                         self.r_state_socks.remove(s)
                         s.close()
@@ -104,8 +126,8 @@ class Feeder_server:
                         data = json.loads(data)
                         if "ID" in data:
                             print('test ID')
-                            self.feeder_list[data["ID"]] = s
-                            print(self.feeder_list)
+                            self.feeder_socket_list[data["ID"]] = s
+                            print(self.feeder_socket_list)
                         else:
                             print('test중')
                     except:
@@ -133,8 +155,8 @@ class Feeder_server:
                 del self.cmd_Queue[s]
                 
     def send_cmd(self, cmd, ID='F-01'):
-        if ID in self.feeder_list:
-            sock = self.feeder_list[ID]
+        if ID in self.feeder_socket_list:
+            sock = self.feeder_socket_list[ID]
             self.w_cmd_socks.append(sock)
             self.cmd_Queue[sock].put(cmd)
         else:
@@ -142,30 +164,43 @@ class Feeder_server:
             print(self.w_cmd_socks)
 
     def send_cmd_all(self, cmd):
-        for ID in self.feeder_list:
-            sock = self.feeder_list[ID]
+        for ID in self.feeder_socket_list:
+            sock = self.feeder_socket_list[ID]
             self.w_cmd_socks.append(sock)
             self.cmd_Queue[sock].put(cmd)
                
-    def get_feeder_info(self,ID='F-01'):
-        if ID in self.info:
-            return self.info[ID]
-        else:
-            print(ID,'는 연결되어 있지 않습니다')
+    def get_feeder_info(self,ID="F-01"):
+        ## ID 급이기의 정보 반환 ##
+        ## return dic -> 
+        # 예) {"feeder_ID":"F-01","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase}
+        return self.info[ID]
             
     def get_feeder_info_all(self):
+        ## 모든 급이기의 정보 반환 ##
+        ## return dic -> 
+        # 예) {"F-01":{"feeder_ID":"F-01","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase},\
+        #      "F-02":{"feeder_ID":"F-02","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase},\
+        #      ...
+        #      "F-10":{"feeder_ID":"F-10","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase}}
         return self.info
 
-    def get_feeder_list(self):
-        return list(self.info.keys())
+    def get_online_feeder_list(self):
+        ## 현재 연결 중인 급이기 ID 리스트 반환 ##
+        ## return list -> 예) ["F-01","F-02"]
+        feeder_list_online = []
+        for i in self.info:
+            if self.info[i]["connectitity"]:
+                feeder_list_online.append(i)
+        return feeder_list_online
     
-    def get_feeder_state(self):
-        feeder_list = self.get_feeder_list
-        for i in self.feeder_full_list:
-            if i in feeder_list:
-                self.feeder_state_list[i]= 'conect'
-            else:
-                self.feeder_state_list[i]= 'disconect'
+    def get_feeder_state(self,ID):
+        ## ID 급이기의 connectivity 상태 반환 ##
+        ## return bool -> 예) True or False
+        return self.feeder_state_list[ID]["connectitity"]
+    
+    def get_feeder_state_all(self):
+        ## 10개 급이기의 connectivity 상태 반환 ##
+        ## return dic -> 예) {"F-01":True,"F-02":True,"F-03":True, ... , "F-10":True}
         return self.feeder_state_list
 
     def stop_feeding(self, ID='F-01'):
@@ -192,21 +227,18 @@ class Feeder_server:
     def set_feed_size(self, size, ID='F-01'):
         cmd = 'size'+str(size)
         self.send_cmd(cmd, ID)
+    
+    def info_updata(self,ID):
+        self.feeder_state_list[ID] = self.info[ID]["connectitity"]
+        
 
 
 if __name__ == "__main__":
-    def API_test():
-        while True:
-            ID = input("ID:")
-            cmd = input("cmd:")
-            FS.send_cmd(cmd,ID)
-            #time.sleep(2)
-
     server_ip = '192.168.0.4'
     state_port = 2200
     cmd_port = 2201
     FS = Feeder_server(server_ip, state_port, cmd_port)
     #FS.get_feeder_info()
-    main_th = threading.Thread(target = API_test)
-    main_th.start()
+    
+    
     
