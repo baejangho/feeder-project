@@ -3,6 +3,7 @@ import queue
 import threading
 import json
 import time
+import feeder_variables
 
 class Feeder_server:
     def __init__(self, ip, state_port, cmd_port):
@@ -12,34 +13,13 @@ class Feeder_server:
         self.cmd_port = cmd_port
         self.BUFFER = 4096                              # buffer max size
         
-        ## 1:N TCP/IP 통신을 위한 변수 초기화 ##
-        self.feeder_max_num = 10                        # max feeder num      
-        # {"ID":{"feeder_ID":"F-01","feed_size":3},"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase}
-        self.info = {"F-01":{"feeder_ID":"F-01","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
-                    "F-02":{"feeder_ID":"F-02","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
-                    "F-03":{"feeder_ID":"F-03","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
-                    "F-04":{"feeder_ID":"F-04","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
-                    "F-05":{"feeder_ID":"F-05","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
-                    "F-06":{"feeder_ID":"F-06","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
-                    "F-07":{"feeder_ID":"F-07","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
-                    "F-08":{"feeder_ID":"F-08","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
-                    "F-09":{"feeder_ID":"F-09","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False},\
-                    "F-10":{"feeder_ID":"F-10","feed_size":3,"remains":10,"feed_motor_ouput":0,\
-                            "spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":False}}
-                                                       
-        self.feeder_socket_list = {}                    # {"F-01":socket정보}
-        self.feeder_state_list = {}                     # {"F-01":True, "F-02":True, ... , "F-10":False}
-        self.feeding_plan = {}                         
-        # {"F-01":{'start time' : '09:00','pace' : 0,'spread':1.5, 'amount' : 1.5},'F-02':{'start time' : '16:00','pace' : 0,'spread':1.5, 'amount' : 1.5}}
+        
+        self.feeder_max_num = 10                                ## 총 급이기 수 = 10개로 가정      
+        self.info = feeder_variables.info                       ## 모든 급이기 info 초기화
+        self.feeding_auto_plan = feeder_variables.auto_plan     ## 모든 급이기 auto_plan 초기화                                         
+        self.feeder_socket_list = {}                            ## 급이기 ID와 client socket 저장 예) {"F-01":socket정보}  
+        self.feeder_state_list = {}                             ## 급이기 ID의 연결상태 저장 예) {"F-01":True, "F-02":True, ... , "F-10":False}                       
+        
         for i in self.info:
             self.feeder_state_list[i]= self.info[i]["connectitity"]
         print(self.feeder_state_list)
@@ -59,15 +39,17 @@ class Feeder_server:
         self.state_server_socket.listen(self.feeder_max_num)
         self.cmd_server_socket.listen(self.feeder_max_num)
         
+        ## 1:N TCP/IP 통신을 위한 변수 초기화 ##
         self.state_Queue = {}                                       # {소켓 : 메시지큐}
         self.cmd_Queue = {}                                         # {소켓 : 메시지큐}
         self.r_state_socks = [self.state_server_socket]
         self.r_cmd_socks = [self.cmd_server_socket]
         self.w_cmd_socks = []
         
+        ## Thread start - main thread 종료 시 모두 종료(타이드풀과 협의 필요)
         state_th = threading.Thread(target = self.state_server_thread)
         cmd_th = threading.Thread(target = self.cmd_server_thread)
-        #state_th.daemon = True
+        state_th.daemon = True
         state_th.start()
         cmd_th.start()
     
