@@ -9,7 +9,7 @@ import time
 class Feeder_client:
     def __init__(self, ip, state_port=2200, cmd_port=2201):
         ## TCP/IP 설정 ##
-        self.ip = "192.168.0.4"                                                     # server ip
+        self.ip = ip                                                    # server ip
         self.state_port = state_port                                                # server port
         self.cmd_port = cmd_port                                                    # server port
         self.BUFFER = 10240                                                         # buffer max size
@@ -75,7 +75,7 @@ class Feeder_client:
                            'event':self.feeder_event,
                            'connectivity':True}
                 json_message = json.dumps(message)
-                self.state_socket.sendall(json_message.encode('UTF-8'))
+                #self.state_socket.sendall(json_message.encode('UTF-8'))
                 duration = time.time() - s_time
                 print('duration of state_event:',duration)
                 if self.state_event_period > duration:
@@ -157,5 +157,5 @@ class Feeder_client:
         self.feed_mode = 'stop'
 
 if __name__ == "__main__":
-    server_ip = '192.168.0.4' # server ip
+    server_ip = '172.30.1.89' # server ip
     Feeder_01 = Feeder_client(server_ip,2200,2201)
