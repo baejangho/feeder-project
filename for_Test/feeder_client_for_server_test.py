@@ -26,23 +26,25 @@ class Feeder_client:
         self.feeder_event = 'nothing'
         
         self.event = threading.Event()
-        self.initialize_socket() 
+        self.init_set() 
     
     def initialize_socket(self):
-        self.event.clear() 
-        self.state_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)       # state socket 생성
-        self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # state socket 생성
-        self.state_socket.connect((self.ip, self.state_port))                       # server로 연결 요청
-        self.cmd_socket.connect((self.ip, self.cmd_port))                           # server로 연결 요청 
-        self.state_thread()
-        self.cmd_thread()
-        self.control_thread()
+        try:
+            self.event.clear() 
+            self.state_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)       # state socket 생성
+            self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # state socket 생성
+            self.state_socket.connect((self.ip, self.state_port),10)                       # server로 연결 요청
+            self.cmd_socket.connect((self.ip, self.cmd_port),10)
+            self.cmd_thread()
+            self.control_thread()
+        except:
+            self.init_set()
     
     def init_set(self):
-        print('서버와 재접속을 시도합니다')
+        print('서버와 접속을 시도합니다')
         self.feed_motor_pwm = 0
         self.spread_motor_pwm = 0
-        time.sleep(3)
+        time.sleep(2)
         self.initialize_socket() 
 
     def state_thread(self):
@@ -157,5 +159,5 @@ class Feeder_client:
         self.feed_mode = 'stop'
 
 if __name__ == "__main__":
-    server_ip = '172.30.1.89' # server ip
+    server_ip = '172.30.83.28' # server ip
     Feeder_01 = Feeder_client(server_ip,2200,2201)
