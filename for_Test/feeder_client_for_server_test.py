@@ -33,11 +33,17 @@ class Feeder_client:
             self.event.clear() 
             self.state_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)       # state socket 생성
             self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # state socket 생성
-            self.state_socket.connect((self.ip, self.state_port),10)                       # server로 연결 요청
-            self.cmd_socket.connect((self.ip, self.cmd_port),10)
+            #self.state_socket.settimeout(10)
+            #self.cmd_socket.settimeout(10)
+            self.state_socket.connect((self.ip, self.state_port))                    # server로 연결 요청
+            self.cmd_socket.connect((self.ip, self.cmd_port))
+            #self.state_socket.settimeout(None)
+            #self.cmd_socket.settimeout(None)
             self.cmd_thread()
+            self.state_thread()
             self.control_thread()
         except:
+            print('서버와 연결되지 않았습니다.')
             self.init_set()
     
     def init_set(self):
@@ -49,17 +55,17 @@ class Feeder_client:
 
     def state_thread(self):
         state_th = threading.Thread(target = self.state_event)
-        #state_th.daemon = True
+        state_th.daemon = True
         state_th.start()
         
     def cmd_thread(self):
         cmd_th = threading.Thread(target = self.cmd_event)
-        #cmd_th.daemon = True
+        cmd_th.daemon = True
         cmd_th.start()
     
     def control_thread(self):
         cmd_th = threading.Thread(target = self.control_event)
-        #cmd_th.daemon = True
+        cmd_th.daemon = True
         cmd_th.start()        
     
     def state_event(self):
@@ -89,7 +95,7 @@ class Feeder_client:
                 print('error in state_event')
                 self.feeder_stop()    
                 self.event.set()  
-                break
+                
         print('state event : 서버와 연결이 끊어졌습니다')
         print('state event terminated!')     
         self.state_socket.close()
@@ -117,11 +123,11 @@ class Feeder_client:
                     print('서버와 연결이 끊어졌습니다')
                     self.event.set()
                     self.feeder_stop()
-                    break
+                    
             except: 
                 print('error in cmd_event') 
                 self.event.set()
-                break
+                
         print('cmd event : 서버와 연결이 끊어졌습니다')
         print('cmd event terminated!')
         self.cmd_socket.close()
@@ -159,5 +165,11 @@ class Feeder_client:
         self.feed_mode = 'stop'
 
 if __name__ == "__main__":
-    server_ip = '172.30.83.28' # server ip
+    server_ip = '127.0.0.1' # server ip
     Feeder_01 = Feeder_client(server_ip,2200,2201)
+    try:
+        while True:
+            #print('test 중')
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print('사용자종료')

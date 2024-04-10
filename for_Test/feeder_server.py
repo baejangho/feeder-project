@@ -211,7 +211,7 @@ class Feeder_server:
 
 
 if __name__ == "__main__":
-    server_ip = '172.20.10.2'
+    server_ip = '127.0.0.1'
     state_port = 2200
     cmd_port = 2201
     FS = Feeder_server(server_ip, state_port, cmd_port)
