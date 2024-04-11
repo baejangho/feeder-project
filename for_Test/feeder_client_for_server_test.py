@@ -5,7 +5,8 @@ import threading
 import json
 import time
 import feeder_pid_module
-#from feeder_loadcell_test import Loadcell
+import feeder_loadcell 
+import feeder_motor
 
 class Feeder_client:
     def __init__(self, ip, state_port=2200, cmd_port=2201):
@@ -32,8 +33,15 @@ class Feeder_client:
         self.control = feeder_pid_module.Pid_control()
         self.feeding_cmd = False
         
+        ## loadcell parameter ##
+        self.LC = feeder_loadcell.Loadcell()
+        ## motor parameter ##
+        self.MT = feeder_motor.Motor_control()
+        
         self.event = threading.Event()
-        self.init_set() 
+        self.init_set()
+        
+        self.sim = True 
     
     def initialize_socket(self):
         try:
@@ -159,38 +167,46 @@ class Feeder_client:
                 feeding_mode = self.feeding_mode
                 
                 ## Load_cell ##
+                #self.weight = self.LC.get_weight(8)
                 cur_weight = self.weight
                 
                 if (feeding_mode == 'auto' or feeding_mode == "manual") & self.feeding_cmd == True:
                     if cur_weight > self.target_weight:     # feeding 진행
-                        feeding_pwm = self.control.calc(self.elapsed_time, self.target_weight, cur_weight)
+                        print('PID 제어 : feeding 진행 중')
+                        desired_weight = self.desired_weight
+                        
+                        feeding_pwm = self.control.calc(self.elapsed_time, desired_weight, cur_weight)
                         spreading_pwm = 30 #self.dist2pwm(self.feed_distance)
                         
-                        ## 모터 제어 ##
-                        # MT.supply_motor_pwm(pwm)
-                        # MT.spread_motor_pwm(30)
-                        ## 로드셀 시뮬레이션 ##
-                        self.weight = self.weight - duration * self.feeding_pace
-                        
+                        if self.sim == True:
+                            ## simulation ##
+                            print('로드셀 시뮬레이션')
+                            self.weight = self.weight - duration * self.feeding_pace
+                        else:
+                            ## real operation ##
+                            self.MT.supply_motor_pwm(feeding_pwm)
+                            self.MT.spread_motor_pwm(spreading_pwm)
+                         
                         ## 현재 motor pwm 업데이트 ##
                         self.feed_motor_pwm = feeding_pwm
                         self.spread_motor_pwm = spreading_pwm
                         
-                        self.desired_weight = self.control.desired_weight_calc(duration, self.feeding_pace, self.init_weight)
-                    else:                                   # feeding 종료
+                        ## PID제어를 위한 다음 desired weight 계산 ##
+                        self.desired_weight = self.control.desired_weight_calc(duration, self.feeding_pace, desired_weight)
+                        
+                    else:   # feeding 종료
                         self.feed_motor_pwm = 0
                         self.spread_motor_pwm = 0
                         self.feed_cmd = False
                         ## feeding end log ##
                             # 코드 작성 필요   
-                    
-                    print('PID 제어')
 
                 elif feeding_mode == 'stop':
-                    print('stop test')
+                    print('feeding stop : feed_mode = stop')
                     self.feeder_stop()
                 else:
-                    print('feed mode error')    
+                    print('feed mode error')
+                        
                 ## loop time 계산 ##
                 duration = time.time() - s_time
                 print('duration of state_event:',duration)

@@ -12,6 +12,7 @@ self.feeding_distance           : 급이 거리(m)    # 메시지에서 받아�
 self.desired_weight             : PID 제어를 위한 목표 사료 무게(kg)
 
 self.feeder_stop()              : 급이 중지, feeding mode 'stop'으로 변경
+self.set_feed_size(size)        : 사료 사이즈 재설정
 
 self.ip                         : server ip addr
 self.state_port                 : state port
