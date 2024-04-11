@@ -1,0 +1,32 @@
+kp                              : P gain
+ki                              : I gain
+min_pwm                         : pwm 최솟값
+max_pwm                         : pwm 최댓값
+
+self.init_weight                : 자동 급이 전 사료량
+self.feeding_weight             : 총 급이량
+self.target_weight              : 이번 회차 급이 후 목표 잔량(self.init_weight - self.feeding_weight)
+self.feeding_cmd                : 급이 명령(True/False)
+self.feeding_pace               : 급이 속도(kg/min)
+self.feeding_distance           : 급이 거리(m)    # 메시지에서 받아올 것
+self.desired_weight             : PID 제어를 위한 목표 사료 무게(kg)
+
+self.feeder_stop()              : 급이 중지, feeding mode 'stop'으로 변경
+
+self.ip                         : server ip addr
+self.state_port                 : state port
+self.cmd_port                   : cmd port                    
+self.BUFFER = 10240             : state/cmd data buffer size
+
+self.feeder_ID                  : feeder ID
+self.weight                     : 사료잔량(kg)
+self.feeding_size               : 사료 사이즈(호)
+self.feed_motor_pwm             : 현재 feed motor pwm(0~100)
+self.spread_motor_pwm = 0       : 현재 spread motor pwm(0~100)
+self.feeding_mode               : feeding mode('stop' 'auto' 'manual')
+self.feeder_event               : feeder 내 이벤트
+
+self.state_event_period = 1 # sec
+
+
+self.isTerminate = False
