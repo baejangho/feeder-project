@@ -1,3 +1,5 @@
+<client variables>
+
 kp                              : P gain
 ki                              : I gain
 min_pwm                         : pwm 최솟값
@@ -31,3 +33,46 @@ self.state_event_period = 1 # sec
 
 
 self.isTerminate = False
+
+<프로토콜>
+## 'state' 프로토콜 ##
+state_msg = {'timestamp:time.strftime("%y/%m/%d %H:%M:%S"),
+            'feeder_ID':self.feeder_ID,
+            'feed_size':self.feed_size,
+            'remains':self.weight,
+            'feed_motor_output':self.feed_motor_pwm,
+            'spread_motor_output':self.spread_motor_pwm,
+            'feeding_mode':self.feeding_mode,
+            'event':self.feeder_event,
+            'connectivity':True}
+## 'set' 프로토콜 ##
+cmd = {"type":"set",
+        "cmd":"size",
+        "value":3}
+
+cmd = {"type":"set",
+        "cmd":"mode",
+        "value":"auto"}
+
+cmd = {"type":"set",
+        "cmd":"id",
+        "value":"F-01"}
+
+## 'control' 프로토콜 ##
+cmd = {"type":"control",
+        "cmd":"stop",
+        "value":""}
+
+# 스케줄러에서 스케줄 시간이 되면 송부 #
+cmd = {"type":"control",
+        "cmd":"start",
+        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_weight":amount}}
+
+cmd = {"type":"control",
+        "cmd":"manual",
+        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_weight":amount}}
+
+## 추가 프로토콜 ##
+cmd = {"type":"ID",
+        "cmd":"id",
+        "value":""}

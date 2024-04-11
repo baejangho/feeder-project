@@ -25,8 +25,6 @@ class Feeder_client:
         self.feeder_event = 'nothing'
         self.feeding_mode = 'stop'     # feed mode : `auto`, `manual`, `stop`
         self.feeding_distance = 0   # 살포 거리 : m 단위
-        
-        self.isTerminate = False
         self.state_event_period = 1 # sec
         
         ## PID 제어 parameter ##
@@ -85,16 +83,17 @@ class Feeder_client:
             try:
                 s_time = time.time()
                 print('send state')
-                message = {'feeder_ID':self.feeder_ID,
-                           'feed_size':self.feed_size,
-                           'remains':self.weight,
-                           'feed_motor_output':self.feed_motor_pwm,
-                           'spread_motor_output':self.spread_motor_pwm,
-                           'feeding_mode':self.feeding_mode,
-                           'event':self.feeder_event,
-                           'connectivity':True}
-                json_message = json.dumps(message)
-                #self.state_socket.sendall(json_message.encode('UTF-8'))
+                state_msg = {'timestamp:time.strftime("%y/%m/%d %H:%M:%S"),
+                            'feeder_ID':self.feeder_ID,
+                            'feed_size':self.feed_size,
+                            'remains':self.weight,
+                            'feed_motor_output':self.feed_motor_pwm,
+                            'spread_motor_output':self.spread_motor_pwm,
+                            'feeding_mode':self.feeding_mode,
+                            'event':self.feeder_event,
+                            'connectivity':True}
+                json_state_msg = json.dumps(state_msg)
+                self.state_socket.sendall(json_state_msg.encode('UTF-8'))
                 duration = time.time() - s_time
                 print('duration of state_event:',duration)
                 if self.state_event_period > duration:
@@ -113,40 +112,67 @@ class Feeder_client:
         self.init_set()
     
     def cmd_event(self):
-        # server로부터 command 수신 #
+        ## server로부터 command 수신 ##
         while not self.event.is_set():
             try:
                 print('test cmd')
-                data = self.cmd_socket.recv(self.BUFFER)
-                if data:
-                    # command에 따른 logic coding
-                    print(data)
-                    if data.decode() == 'ID':
-                        message = {'ID':self.feeder_ID}
-                        json_message = json.dumps(message)
-                        self.cmd_socket.sendall(json_message.encode('UTF-8'))
+                ## command에 따른 logic coding ##
+                data = self.cmd_socket.recv(self.BUFFER) 
+                data = json.loads(data)
+                print(data)
+                if data["type"] == 'ID':
+                    message = {'ID':self.feeder_ID}
+                    json_message = json.dumps(message)
+                    self.cmd_socket.sendall(json_message.encode('UTF-8'))
+                    
+                elif data["type"] == 'set':
+                    if data["cmd"] == "size":
+                        self.set_feed_size(data["value"])
+                    elif data["cmd"] == "id":
+                        self.set_feed_id(data["value"])
+                    elif data["cmd"] == "mode":
+                        self.set_feed_mode(data["value"])
                     else:
-                        # 메시지 parsing
-                        if True:        # auto mode & feeding start cmd
-                            self.init_weight = self.weight
-                            self.feeding_weight = 1.0    # 메시지에서 받아올 것
-                            self.target_weight = self.init_weight - self.feed_weight
-                            self.feeding_mode = 'auto'
+                        print('set command error')
+                    
+                elif data["type"] == 'control':
+                    if data["cmd"] == "start":
+                        self.init_weight = self.weight
+                        self.feeding_weight = data["value"]["feeding_weight"]    
+                        self.target_weight = self.init_weight - self.feed_weight
+                        if self.feeding_mode == 'auto':
                             self.feeding_cmd = True
-                            self.feeding_pace = 20         # 메시지에서 받아올 것
-                            self.feeding_distance = 1.5    # 메시지에서 받아올 것
-                            self.desired_weight = self.control.desired_weight_calc(0,self.feed_pace,self.init_weight)
-                            ## feeding start log ##
-                            # 코드 작성 필요
-          
-                
+                        else:
+                            self.feeding_cmd = False
+                        self.feeding_pace = data["value"]["feeding_pace"]         
+                        self.feeding_distance = data["value"]["feeding_distance"]    
+                        self.desired_weight = self.control.desired_weight_calc(0,self.feed_pace,self.init_weight)
+                        ## feeding start log ##
+                        # 코드 작성 필요   
+                    elif data["cmd"] == "manual":
+                        self.init_weight = self.weight
+                        self.feeding_weight = data["value"]["feeding_weight"]    
+                        self.target_weight = self.init_weight - self.feed_weight
+                        self.feeding_mode = 'manual'
+                        self.feeding_cmd = True
+                        self.feeding_pace = data["value"]["feeding_pace"]         
+                        self.feeding_distance = data["value"]["feeding_distance"]    
+                        self.desired_weight = self.control.desired_weight_calc(0,self.feed_pace,self.init_weight)
+                        ## feeding start log ##
+                        # 코드 작성 필요 
+                    elif data["cmd"] == "stop":
+                        self.feeder_stop()
+                        ## feeding stop log ##
+                        # 코드 작성 필요
+                    else:
+                        print('control command error')
+                    
                 else:
-                    print('서버와 연결이 끊어졌습니다')
-                    self.event.set()
-                    self.feeder_stop()
+                    print('command type error')
                     
             except: 
-                print('error in cmd_event') 
+                print('error in cmd_event')
+                self.feeder_stop()
                 self.event.set()
                 
         print('cmd event : 서버와 연결이 끊어졌습니다')
@@ -158,7 +184,7 @@ class Feeder_client:
         #LC = Loadcell()
         duration = 0
           
-        while not self.isTerminate:
+        while True:
             try:
                 ## loop 시작 시간 ##
                 s_time = time.time()
@@ -174,7 +200,6 @@ class Feeder_client:
                     if cur_weight > self.target_weight:     # feeding 진행
                         print('PID 제어 : feeding 진행 중')
                         desired_weight = self.desired_weight
-                        
                         feeding_pwm = self.control.calc(self.elapsed_time, desired_weight, cur_weight)
                         spreading_pwm = 30 #self.dist2pwm(self.feed_distance)
                         
@@ -198,6 +223,8 @@ class Feeder_client:
                         self.feed_motor_pwm = 0
                         self.spread_motor_pwm = 0
                         self.feed_cmd = False
+                        self.MT.supply_motor_pwm(self.feeding_pwm)
+                        self.MT.spread_motor_pwm(self.spreading_pwm)
                         ## feeding end log ##
                             # 코드 작성 필요   
 
@@ -224,10 +251,19 @@ class Feeder_client:
     def feeder_stop(self):
         self.feed_motor_pwm = 0
         self.spread_motor_pwm = 0
+        self.MT.supply_motor_pwm(self.feed_motor_pwm)
+        self.MT.spread_motor_pwm(self.spread_motor_pwm)
         self.feeding_mode = 'stop'
+        self.feed_cmd = False
     
     def set_feed_size(self, size):
         self.feed_size = size
+    
+    def set_feed_id(self, id):
+        self.feed_ID = id
+        
+    def set_feed_mode(self, mode):
+        self.feeding_mode = mode
 
 if __name__ == "__main__":
     server_ip = '127.0.0.1' # server ip
