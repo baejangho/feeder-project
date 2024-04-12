@@ -6,7 +6,7 @@ def function1():
     print("Function 1 is executed!")
 
 def function2():
-    print(FS.manual_feeding(5000, 1.5, 1.6, ID='F-01'))
+    print(FS.manual_feeding(4.5, 1.5, 1.6, ID='F-01'))
     print("Function 2 is executed!")
 
 def function3():

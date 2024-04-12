@@ -31,23 +31,23 @@ info = {"F-01":{"feeder_ID":"F-01","feed_size":3,"remains":5,"feed_motor_ouput":
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")}}
 
-auto_plan = {"F-01":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                     1:{'start time' : '16:00','pace' : 10,'spread':1.5, 'feed amount' : 1.5}},\
-            "F-02":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
-            "F-03":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
-            "F-04":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
-            "F-05":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
-            "F-06":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
-            "F-07":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
-            "F-08":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
-            "F-09":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},\
-            "F-10":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
-                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}}}
+auto_plan = {"F-01":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                     1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}},\
+            "F-02":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                    1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}},
+            "F-03":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                    1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}},
+            "F-04":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                    1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}},
+            "F-05":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                    1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}},
+            "F-06":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                    1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}},
+            "F-07":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                    1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}},
+            "F-08":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                    1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}},
+            "F-09":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                    1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}},\
+            "F-10":{0:{'start time' : '09:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5},\
+                    1:{'start time' : '16:00','pace' : 4.5,'spread':1.5, 'feed amount' : 1.5}}}

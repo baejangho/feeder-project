@@ -136,8 +136,8 @@ class Feeder_client:
                 elif data["type"] == 'control':
                     if data["cmd"] == "start":
                         self.init_weight = self.weight
-                        self.feeding_amount = data["value"]["feeding_amount"]   
-                        self.target_weight = self.init_weight - self.feeding_amount
+                        self.feeding_amount = data["value"]["feeding_amount"] # kg  
+                        self.target_weight = self.init_weight - self.feeding_amount # kg
                         
                         ## 남은 사료량 확인 ##
                         if self.check_feeding_amount(self.target_weight):
@@ -148,18 +148,18 @@ class Feeder_client:
                         else:
                             self.feeding_cmd = False
                             
-                        self.feeding_pace = data["value"]["feeding_pace"]          
-                        self.feeding_distance = data["value"]["feeding_distance"]    
-                        self.desired_weight = self.control.desired_weight_calc(0,self.feeding_pace/1000*60,self.init_weight)
+                        self.feeding_pace = data["value"]["feeding_pace"]  # kg/min
+                        self.feeding_distance = data["value"]["feeding_distance"]  # m 
+                        self.desired_weight = self.init_weight # kg
                         ## feeding start log ##
                         # 코드 작성 필요
                         
                     ## low feed log ##   
                     elif data["cmd"] == "manual":
                         self.feeding_mode = 'manual'
-                        self.init_weight = self.weight
-                        self.feeding_amount = data["value"]["feeding_amount"]  
-                        self.target_weight = self.init_weight - self.feeding_amount
+                        self.init_weight = self.weight  # kg
+                        self.feeding_amount = data["value"]["feeding_amount"] # kg 
+                        self.target_weight = self.init_weight - self.feeding_amount # kg
                         print(self.target_weight)                        
                         ## 남은 사료량 확인 ##
                         if self.check_feeding_amount(self.target_weight):
@@ -167,15 +167,17 @@ class Feeder_client:
                             self.feeding_cmd = False
                         else:
                             self.feeding_cmd = True
-                        self.feeding_pace = data["value"]["feeding_pace"]        
-                        self.feeding_distance = data["value"]["feeding_distance"]   
-                        self.desired_weight = self.control.desired_weight_calc(0,self.feeding_pace/1000*60,self.init_weight)                    
+                        self.feeding_pace = data["value"]["feeding_pace"]   # kg/min     
+                        self.feeding_distance = data["value"]["feeding_distance"] # m  
+                        self.desired_weight = self.init_weight   # kg                
                         ## feeding start log ##
                         # 코드 작성 필요
+                    
                     elif data["cmd"] == "stop":
                         self.feeder_stop()
                         ## feeding stop log ##
                         # 코드 작성 필요
+                    
                     else:
                         print('control command error')
                     
@@ -194,7 +196,7 @@ class Feeder_client:
     def control_event(self):
         # 0.1초 loop : 로드셀, pid 제어 진행
         #LC = Loadcell()
-        #duration = 0.1
+        duration = 0.1
         dt = 0.1
           
         while True:
@@ -204,21 +206,24 @@ class Feeder_client:
                 
                 ## Load_cell ##
                 #self.weight = self.LC.get_weight(8)
-                cur_weight = self.weight
+                cur_weight = self.weight * 1000 # g 단위
+                target_weight = self.target_weight * 1000 # g 단위
+                feeding_cmd = self.feeding_cmd
+                feeding_pace = self.feeding_pace * 1000 / 60 # g/s 단위
                 ## 주기적으로 남은 사료량 확인 ##
-                self.check_feed_state(cur_weight)
+                self.check_feed_state(cur_weight)   # g 단위로 check
                 
                 ## feeding_mode ##
                 feeding_mode = self.feeding_mode
 
-                if (feeding_mode == 'auto' or feeding_mode == "manual") & self.feeding_cmd == True:
-                    if cur_weight > self.target_weight:     # feeding 진행
-                        desired_weight = self.desired_weight
-                        feeding_pwm = self.control.calc(dt, desired_weight, cur_weight)
+                if (feeding_mode == 'auto' or feeding_mode == "manual") & feeding_cmd == True:
+                    if cur_weight > target_weight:     # feeding 진행
+                        desired_weight = self.desired_weight * 1000 # g 단위
+                        feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
                         spreading_pwm = 30 #self.dist2pwm(self.feed_distance)
                         if self.sim:
                             ## loadcell simulation ##
-                            self.weight = self.weight - duration * self.feeding_pace / 1000 * 60
+                            self.weight = self.weight - duration * feeding_pace / 1000  # kg 단위
                         else:
                             ## real operation ##
                             self.MT.supply_motor_pwm(feeding_pwm)
@@ -229,7 +234,7 @@ class Feeder_client:
                         self.spread_motor_pwm = spreading_pwm
                         
                         ## PID제어를 위한 다음 desired weight 계산 ##
-                        self.desired_weight = self.control.desired_weight_calc(dt, self.feeding_pace, desired_weight)
+                        self.desired_weight = self.control.desired_weight_calc(dt, feeding_pace/1000, desired_weight/1000) # kg 단위
                         
                     else:   # feeding 종료
                         self.feed_motor_pwm = 0
@@ -288,7 +293,7 @@ class Feeder_client:
             return False
     
     def check_feed_state(self, weight):
-        if weight < 0.5:
+        if weight < 0.5 * 1000:
             self.weight_event = "low feed"
             self.feeder_event['remains'] = self.weight_event
         #print(self.feeder_event)
