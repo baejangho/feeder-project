@@ -22,7 +22,10 @@ class Feeder_client:
         self.feed_size = 3          # 사료 사이즈 : 호
         self.feed_motor_pwm = 0     # feed motor pwm : 0~100  
         self.spread_motor_pwm = 0   # spread motor pwm : 0~100
-        self.feeder_event = 'nothing'
+        self.feeder_event = {"remains":self.weight_event,
+                             "motor_state":self.motor_event}
+        self.weight_event = "enough" # remains : enough feed, low feed
+        self.motor_event = "stop"    # motor_state : stop, running, over current
         self.feeding_mode = 'stop'     # feed mode : `auto`, `manual`, `stop`
         self.feeding_distance = 0   # 살포 거리 : m 단위
         self.state_event_period = 1 # sec
@@ -83,7 +86,7 @@ class Feeder_client:
             try:
                 s_time = time.time()
                 print('send state')
-                state_msg = {'timestamp:time.strftime("%y/%m/%d %H:%M:%S"),
+                state_msg = {'timestamp':time.strftime("%y/%m/%d %H:%M:%S"),
                             'feeder_ID':self.feeder_ID,
                             'feed_size':self.feed_size,
                             'remains':self.weight,
@@ -129,32 +132,47 @@ class Feeder_client:
                     if data["cmd"] == "size":
                         self.set_feed_size(data["value"])
                     elif data["cmd"] == "id":
-                        self.set_feed_id(data["value"])
+                        self.set_feeder_id(data["value"])
                     elif data["cmd"] == "mode":
-                        self.set_feed_mode(data["value"])
+                        self.set_feeding_mode(data["value"])
                     else:
                         print('set command error')
                     
                 elif data["type"] == 'control':
                     if data["cmd"] == "start":
                         self.init_weight = self.weight
-                        self.feeding_weight = data["value"]["feeding_weight"]    
+                        self.feeding_amout = data["value"]["feeding_amout"]    
                         self.target_weight = self.init_weight - self.feed_weight
+                        
+                        ## 남은 사료량 확인 ##
+                        if self.check_feeding_amount(self.target_weight):
+                            self.feeding_mode = 'stop'
+                        
                         if self.feeding_mode == 'auto':
                             self.feeding_cmd = True
                         else:
                             self.feeding_cmd = False
+                            
                         self.feeding_pace = data["value"]["feeding_pace"]         
                         self.feeding_distance = data["value"]["feeding_distance"]    
                         self.desired_weight = self.control.desired_weight_calc(0,self.feed_pace,self.init_weight)
                         ## feeding start log ##
-                        # 코드 작성 필요   
+                        # 코드 작성 필요
+                        
+                    ## low feed log ##   
                     elif data["cmd"] == "manual":
-                        self.init_weight = self.weight
-                        self.feeding_weight = data["value"]["feeding_weight"]    
-                        self.target_weight = self.init_weight - self.feed_weight
                         self.feeding_mode = 'manual'
-                        self.feeding_cmd = True
+                        self.init_weight = self.weight
+                        self.feeding_amout = data["value"]["feeding_amout"]    
+                        self.target_weight = self.init_weight - self.feed_weight
+                        
+                        ## 남은 사료량 확인 ##
+                        if self.check_feeding_amount(self.target_weight):
+                            self.feeding_mode = 'stop'
+                            self.feeding_cmd = False
+                        else:
+                            self.feeding_cmd = True
+                            
                         self.feeding_pace = data["value"]["feeding_pace"]         
                         self.feeding_distance = data["value"]["feeding_distance"]    
                         self.desired_weight = self.control.desired_weight_calc(0,self.feed_pace,self.init_weight)
@@ -189,13 +207,15 @@ class Feeder_client:
                 ## loop 시작 시간 ##
                 s_time = time.time()
                 
-                ## feeding_mode ##
-                feeding_mode = self.feeding_mode
-                
                 ## Load_cell ##
                 #self.weight = self.LC.get_weight(8)
                 cur_weight = self.weight
+                ## 주기적으로 남은 사료량 확인 ##
+                self.check_feed_state(cur_weight)
                 
+                ## feeding_mode ##
+                feeding_mode = self.feeding_mode
+
                 if (feeding_mode == 'auto' or feeding_mode == "manual") & self.feeding_cmd == True:
                     if cur_weight > self.target_weight:     # feeding 진행
                         print('PID 제어 : feeding 진행 중')
@@ -259,11 +279,22 @@ class Feeder_client:
     def set_feed_size(self, size):
         self.feed_size = size
     
-    def set_feed_id(self, id):
+    def set_feeder_id(self, id):
         self.feed_ID = id
         
-    def set_feed_mode(self, mode):
+    def set_feeding_mode(self, mode):
         self.feeding_mode = mode
+        
+    def check_feeding_amount(self, target_weight):
+        if target_weight < 0: 
+            self.weight_event = "low feed"
+            return False
+        else:
+            self.weight_event = "enough feed"
+            return True
+    def check_feed_state(self, weight):
+        if weight < 0.5:
+            self.weight_event = "low feed"
 
 if __name__ == "__main__":
     server_ip = '127.0.0.1' # server ip

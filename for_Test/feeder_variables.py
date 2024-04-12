@@ -39,5 +39,5 @@ auto_plan = {"F-01":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed a
                     1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
             "F-09":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
                     1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},\
-            "F-01":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+            "F-10":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
                     1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}}}

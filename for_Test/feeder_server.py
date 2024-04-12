@@ -4,6 +4,7 @@ import threading
 import json
 import time
 import feeder_variables
+import schedule
 
 class Feeder_server:
     def __init__(self, ip, state_port, cmd_port):
@@ -16,7 +17,13 @@ class Feeder_server:
         ## 주요 변수 초기화
         self.feeder_max_num = 10                                # 총 급이기 수 = 10개로 가정     
         self.info = feeder_variables.info                       # 모든 급이기 info 초기화
-        self.feeding_auto_plan = feeder_variables.auto_plan     # 모든 급이기 auto_plan 초기화                                         
+        self.feeding_auto_plan = feeder_variables.auto_plan     # 모든 급이기 auto_plan 초기화
+        
+        ## 급이기 auto_plan에 따른 스케줄러 설정 ##
+        for feeder, jobs in self.feeding_auto_plan.items():
+            for job in jobs.values():
+                schedule.every().day.at(job['start time']).do(self.feeding_start, feeder, job)
+                                                 
         self.feeder_socket_list = {}                            # 급이기 ID와 client socket 저장 예) {"F-01":socket정보}  
         self.feeder_state_list = {}                             # 급이기 ID의 연결상태 저장 예) {"F-01":True, "F-02":True, ... , "F-10":False}
         for i in self.info:
@@ -83,6 +90,7 @@ class Feeder_server:
     def cmd_server_thread(self):
         while self.r_cmd_socks:
             #print('cmd test')
+            schedule.run_pending()
             readEvent, writeEvent, errorEvent = select.select(self.r_cmd_socks, self.w_cmd_socks, self.r_cmd_socks, 1)
             
             for s in readEvent:                                     # 읽기 가능 소켓 조사
@@ -122,10 +130,11 @@ class Feeder_server:
                 except: #queue.Empty():
                     self.w_cmd_socks.remove(s)                      # 송신 소켓 목록에서 제거
                 else:
-                    s.send(next_msg.encode())
+                    json_state_msg = json.dumps(next_msg)
+                    s.sendall(json_state_msg.encode('UTF-8'))
             
             for s in errorEvent:                                    # 오류 발생 소켓 조사
-                self.r_cmd_socks.remove(s)                        # 수시 소켓 목록에서 제거
+                self.r_cmd_socks.remove(s)                          # 수시 소켓 목록에서 제거
                 if s in self.w_cmd_socks:
                     self.w_cmd_socks.remove(s)
                 s.close()
@@ -138,13 +147,16 @@ class Feeder_server:
             self.cmd_Queue[sock].put(cmd)
         else:
             print(ID,'는 연결되어 있지 않습니다')
-            print(self.w_cmd_socks)
+            #print(self.w_cmd_socks)
 
     def send_cmd_all(self, cmd):
         for ID in self.feeder_socket_list:
-            sock = self.feeder_socket_list[ID]
-            self.w_cmd_socks.append(sock)
-            self.cmd_Queue[sock].put(cmd)
+            if self.feeder_socket_list[ID]:
+                sock = self.feeder_socket_list[ID]
+                self.w_cmd_socks.append(sock)
+                self.cmd_Queue[sock].put(cmd)
+            else:
+                print(ID,'는 연결되어 있지 않습니다')
                
     def get_feeder_info(self,ID="F-01"):
         ## ID 급이기의 정보 반환 ##
@@ -207,6 +219,18 @@ class Feeder_server:
     
     def info_updata(self,ID):
         self.feeder_state_list[ID] = self.info[ID]["connectitity"]
+        
+    def feeding_start(self,feeder, job):
+        if self.feeder_socket_list[feeder]:
+            print('start')
+            job["pace"]
+            job["spread"]
+            job["feed amount"]
+            cmd = {"type":"control",
+                   "cmd":"start",
+                   "value":{"feeding_pace":job["pace"],"feeding_distance":job["spread"],"feeding_amout":job["feed amount"]}}
+            self.send_cmd(cmd, feeder)
+
         
 
 

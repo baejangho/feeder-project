@@ -2,7 +2,7 @@
 
 class Pid_control:
  
-    def __init__(self, _min, _max, _kp, _ki, _kd):
+    def __init__(self, _min=0, _max=100, _kp=2, _ki=0.00017, _kd=0):
         self.update(_min, _max, _kp, _ki, _kd)
  
     def update(self, _min, _max, _kp, _ki, _kd):

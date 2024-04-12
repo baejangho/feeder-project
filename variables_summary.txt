@@ -6,7 +6,7 @@ min_pwm                         : pwm 최솟값
 max_pwm                         : pwm 최댓값
 
 self.init_weight                : 자동 급이 전 사료량
-self.feeding_weight             : 총 급이량
+self.feeding_amout             : 총 급이량
 self.target_weight              : 이번 회차 급이 후 목표 잔량(self.init_weight - self.feeding_weight)
 self.feeding_cmd                : 급이 명령(True/False)
 self.feeding_pace               : 급이 속도(kg/min)
@@ -28,11 +28,37 @@ self.feed_motor_pwm             : 현재 feed motor pwm(0~100)
 self.spread_motor_pwm = 0       : 현재 spread motor pwm(0~100)
 self.feeding_mode               : feeding mode('stop' 'auto' 'manual')
 self.feeder_event               : feeder 내 이벤트
+self.feeder_event = {"remains":self.weight_event,"motor_state":self.motor_event}
 
 self.state_event_period = 1 # sec
 
-
 self.isTerminate = False
+
+<client functions>
+set_feeder_id(self, id)                         : feeder ID 설정
+set_feed_size(self, size)                       : 사료 사이즈 설정
+set_feeding_mode(self, mode)                    : feeding mode 설정
+check_feeding_amout(self, target_weight)        : 급이 가능 확인
+check_feed_state(self.weight)                   : 사료 잔량 확인
+
+<server variables>
+
+self.server_ip                                  : server ip addr
+self.state_port                                 : state port
+self.cmd_port                                   : cmd port
+self.BUFFER                                     : state/cmd data buffer size
+
+## 주요 변수 초기화
+self.feeder_max_num                             : 총 급이기 수(10개)     
+self.info                                       : 모든 급이기 info 
+self.feeding_auto_plan                          : 모든 급이기 auto_plan
+                                                
+self.feeder_socket_list                         : 급이기 ID와 client socket 저장 예) {"F-01":socket정보}  
+self.feeder_state_list                          : 급이기 ID의 연결상태 저장 예) {"F-01":True, "F-02":True, ... , "F-10":False}
+
+<server functions>
+
+
 
 <프로토콜>
 ## 'state' 프로토콜 ##
@@ -59,20 +85,21 @@ cmd = {"type":"set",
         "value":"F-01"}
 
 ## 'control' 프로토콜 ##
-cmd = {"type":"control",
-        "cmd":"stop",
-        "value":""}
 
 # 스케줄러에서 스케줄 시간이 되면 송부 #
 cmd = {"type":"control",
         "cmd":"start",
-        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_weight":amount}}
+        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_amout":amount}}
 
 cmd = {"type":"control",
         "cmd":"manual",
-        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_weight":amount}}
+        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_amout":amount}}
 
-## 추가 프로토콜 ##
+cmd = {"type":"control",
+        "cmd":"stop",
+        "value":""}
+
+## 추가 프로토콜 : ID와 소켓 확인용 ##
 cmd = {"type":"ID",
         "cmd":"id",
         "value":""}
