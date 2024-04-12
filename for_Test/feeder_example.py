@@ -10,7 +10,7 @@ def function2():
     print("Function 2 is executed!")
 
 def function3():
-    print(FS.get_feeder_info('F-02'))
+    print(FS.get_feeder_info('F-03'))
     print("Function 3 is executed!")
     
 def function4():
