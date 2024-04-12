@@ -16,7 +16,7 @@ class Feeder_client:
         
         ## feeder state parameter 초기화 ##
         self.feeder_ID = 'F-01'
-        self.weight = 2.0           # 사료잔량 : kg 단위
+        self.weight = 4.0           # 사료잔량 : kg 단위
         self.feed_size = 3          # 사료 사이즈 : 호
         self.feed_motor_pwm = 0     # feed motor pwm : 0~100  
         self.spread_motor_pwm = 0   # spread motor pwm : 0~100
@@ -25,12 +25,14 @@ class Feeder_client:
         self.feeding_mode = 'stop'     # feed mode : `auto`, `manual`, `stop`
         self.feeding_distance = 0   # 살포 거리 : m 단위
         self.state_event_period = 1 # sec
-        self.feeder_event = {"remains":self.weight_event,
+        self.feeder_event = {"remains_state":self.weight_event,
                              "motor_state":self.motor_event}
         
         ## PID 제어 parameter ##
         self.control = feeder_pid_module.Pid_control()
         self.feeding_cmd = False
+        self.target_weight = 0 # kg
+        self.feeding_pace = 0 # kg/min
         
         ## loadcell parameter ##
         #self.LC = feeder_loadcell.Loadcell()
@@ -146,8 +148,7 @@ class Feeder_client:
                         if self.feeding_mode == 'auto':
                             self.feeding_cmd = True
                         else:
-                            self.feeding_cmd = False
-                            
+                            self.feeding_cmd = False  
                         self.feeding_pace = data["value"]["feeding_pace"]  # kg/min
                         self.feeding_distance = data["value"]["feeding_distance"]  # m 
                         self.desired_weight = self.init_weight # kg
@@ -169,7 +170,7 @@ class Feeder_client:
                             self.feeding_cmd = True
                         self.feeding_pace = data["value"]["feeding_pace"]   # kg/min     
                         self.feeding_distance = data["value"]["feeding_distance"] # m  
-                        self.desired_weight = self.init_weight   # kg                
+                        self.desired_weight = self.init_weight   # kg             
                         ## feeding start log ##
                         # 코드 작성 필요
                     
@@ -196,7 +197,6 @@ class Feeder_client:
     def control_event(self):
         # 0.1초 loop : 로드셀, pid 제어 진행
         #LC = Loadcell()
-        duration = 0.1
         dt = 0.1
           
         while True:
@@ -217,13 +217,13 @@ class Feeder_client:
                 feeding_mode = self.feeding_mode
 
                 if (feeding_mode == 'auto' or feeding_mode == "manual") & feeding_cmd == True:
-                    if cur_weight > target_weight:     # feeding 진행
+                    if cur_weight > target_weight:     # feeding 진행 g 단위    
                         desired_weight = self.desired_weight * 1000 # g 단위
                         feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
                         spreading_pwm = 30 #self.dist2pwm(self.feed_distance)
                         if self.sim:
                             ## loadcell simulation ##
-                            self.weight = self.weight - duration * feeding_pace / 1000  # kg 단위
+                            self.weight = self.weight - dt * feeding_pace / 1000   # kg 단위
                         else:
                             ## real operation ##
                             self.MT.supply_motor_pwm(feeding_pwm)
@@ -236,6 +236,9 @@ class Feeder_client:
                         ## PID제어를 위한 다음 desired weight 계산 ##
                         self.desired_weight = self.control.desired_weight_calc(dt, feeding_pace/1000, desired_weight/1000) # kg 단위
                         
+                        self.motor_event = "running"
+                        self.feeder_event['motor_state'] = self.motor_event
+                        
                     else:   # feeding 종료
                         self.feed_motor_pwm = 0
                         self.spread_motor_pwm = 0
@@ -243,6 +246,8 @@ class Feeder_client:
                         #self.feeding_mode = 'stop'
                         #self.MT.supply_motor_pwm(self.feeding_pwm)
                         #self.MT.spread_motor_pwm(self.spreading_pwm)
+                        self.motor_event = "stop"
+                        self.feeder_event['motor_state'] = self.motor_event
                         ## feeding end log ##
                             # 코드 작성 필요   
 
@@ -250,7 +255,8 @@ class Feeder_client:
                     #print('feeding stop : feed_mode = stop')
                     self.feeder_stop()
                 else:
-                    print('feed mode :',feeding_mode)
+                    #print('feed mode :',feeding_mode)
+                    pass
                         
                 ## loop time 계산 ##
                 duration = time.time() - s_time
@@ -285,17 +291,17 @@ class Feeder_client:
     def check_feeding_amount(self, target_weight):
         if target_weight < 0: 
             self.weight_event = "low feed"
-            self.feeder_event['remains'] = self.weight_event
+            self.feeder_event['remains_state'] = self.weight_event
             return True
         else:
             self.weight_event = "enough feed"
-            self.feeder_event['remains'] = self.weight_event
+            self.feeder_event['remains_state'] = self.weight_event
             return False
     
     def check_feed_state(self, weight):
-        if weight < 0.5 * 1000:
+        if weight < 0.5 * 1000: # g 단위로 확인
             self.weight_event = "low feed"
-            self.feeder_event['remains'] = self.weight_event
+            self.feeder_event['remains_state'] = self.weight_event
         #print(self.feeder_event)
 
 if __name__ == "__main__":

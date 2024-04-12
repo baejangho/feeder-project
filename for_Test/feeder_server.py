@@ -290,7 +290,7 @@ class Feeder_server:
             print('feeding start')
             cmd = {"type":"control",
                    "cmd":"start",
-                   "value":{"feeding_pace":job["pace"],"feeding_distance":job["spread"],"feeding_amout":job["feed amount"]}}
+                   "value":{"feeding_pace":job["pace"],"feeding_distance":job["spread"],"feeding_amount":job["feed amount"]}}
             self.send_cmd(cmd, feeder)
 
     def send_cmd(self, cmd, ID='F-01'):
