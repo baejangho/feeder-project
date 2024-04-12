@@ -6,15 +6,15 @@ def function1():
     print("Function 1 is executed!")
 
 def function2():
-    print(FS.manual_feeding(100, 1.5, 1.6, ID='F-01'))
+    print(FS.manual_feeding(5000, 1.5, 1.6, ID='F-01'))
     print("Function 2 is executed!")
 
 def function3():
-    print(FS.set_feeding_mode("stop","F-01"))
+    print(FS.get_feeder_info('F-02'))
     print("Function 3 is executed!")
     
 def function4():
-    print(FS.set_feeding_mode("stop","F-01"))
+    print(FS.set_feeding_mode("manual","F-01"))
     print("Function 3 is executed!")
     
 

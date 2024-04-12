@@ -15,7 +15,7 @@ class Feeder_client:
         self.BUFFER = 10240                          # buffer max size
         
         ## feeder state parameter 초기화 ##
-        self.feeder_ID = 'F-01'
+        self.feeder_ID = 'F-02'
         self.weight = 2.0           # 사료잔량 : kg 단위
         self.feed_size = 3          # 사료 사이즈 : 호
         self.feed_motor_pwm = 0     # feed motor pwm : 0~100  

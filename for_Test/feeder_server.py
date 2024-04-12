@@ -204,11 +204,11 @@ class Feeder_server:
         self.send_cmd_all(cmd)
     
     def manual_feeding(self, pace, dist, amount, ID='F-01'):
-        cmd = {"type":"control","cmd":"manual","value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amout":amount}}
+        cmd = {"type":"control","cmd":"manual","value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amount":amount}}
         self.send_cmd(cmd, ID)
         
     def manual_feeding_all(self, pace, dist, amount):
-        cmd = {"type":"control","cmd":"manual","value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amout":amount}}
+        cmd = {"type":"control","cmd":"manual","value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amount":amount}}
         self.send_cmd_all(cmd)
    
     ## set 함수 ##
