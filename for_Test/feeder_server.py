@@ -317,7 +317,8 @@ if __name__ == "__main__":
     try:
         while True:
             #print('test 중')
-            time.sleep(1)
+            time.sleep(10)
+            
     except KeyboardInterrupt:
         print('사용자종료')
     

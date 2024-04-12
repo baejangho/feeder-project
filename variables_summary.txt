@@ -12,6 +12,7 @@ self.feeding_cmd                : 급이 명령(True/False)
 self.feeding_pace               : 급이 속도(kg/min)
 self.feeding_distance           : 급이 거리(m)    # 메시지에서 받아올 것
 self.desired_weight             : PID 제어를 위한 목표 사료 무게(kg)
+self.state_event_period         : state 송신 주기(sec)
 
 self.feeder_stop()              : 급이 중지, feeding mode 'stop'으로 변경
 self.set_feed_size(size)        : 사료 사이즈 재설정
@@ -29,10 +30,6 @@ self.spread_motor_pwm = 0       : 현재 spread motor pwm(0~100)
 self.feeding_mode               : feeding mode('stop' 'auto' 'manual')
 self.feeder_event               : feeder 내 이벤트
 self.feeder_event = {"remains":self.weight_event,"motor_state":self.motor_event}
-
-self.state_event_period = 1 # sec
-
-self.isTerminate = False
 
 <client functions>
 set_feeder_id(self, id)                         : feeder ID 설정
@@ -58,6 +55,7 @@ self.feeder_state_list                          : 급이기 ID의 연결상태 �
 
 <server functions>
 
+- get 함수 - 
 
 
 <프로토콜>
@@ -89,11 +87,11 @@ cmd = {"type":"set",
 # 스케줄러에서 스케줄 시간이 되면 송부 #
 cmd = {"type":"control",
         "cmd":"start",
-        "value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amout":amount}}
+        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_amout":amount}}
 
 cmd = {"type":"control",
         "cmd":"manual",
-        "value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amout":amount}}
+        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_amout":amount}}
 
 cmd = {"type":"control",
         "cmd":"stop",
