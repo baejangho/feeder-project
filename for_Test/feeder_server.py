@@ -27,7 +27,7 @@ class Feeder_server:
         self.feeder_socket_list = {}                            # 급이기 ID와 client socket 저장 예) {"F-01":socket정보}  
         self.feeder_state_list = {}                             # 급이기 ID의 연결상태 저장 예) {"F-01":True, "F-02":True, ... , "F-10":False}
         for i in self.info:
-            self.feeder_state_list[i]= self.info[i]["connectitity"]
+            self.feeder_state_list[i]= self.info[i]["connectivity"]
         print(self.feeder_state_list)
                                  
         self.initialize_socket()        
@@ -151,35 +151,40 @@ class Feeder_server:
     def get_feeder_info(self,ID="F-01"):
         ## ID 급이기의 정보 반환 ##
         ## return dic -> 
-        # 예) {"feeder_ID":"F-01","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase}
+        # 예) {"feeder_ID":"F-01","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectivity":Flase}
         return self.info[ID]
             
     def get_feeder_info_all(self):
         ## 모든 급이기의 정보 반환 ##
         ## return dic -> 
-        # 예) {"F-01":{"feeder_ID":"F-01","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase},\
-        #      "F-02":{"feeder_ID":"F-02","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase},\
+        # 예) {"F-01":{"feeder_ID":"F-01","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectivity":Flase},\
+        #      "F-02":{"feeder_ID":"F-02","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectivity":Flase},\
         #      ...
-        #      "F-10":{"feeder_ID":"F-10","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectitity":Flase}}
+        #      "F-10":{"feeder_ID":"F-10","feed_size":3,"remains":10,"feed_motor_ouput":0,"spread_motor_ouput":0,"feed_mode":"stop","event":"nothing","connectivity":Flase}}
         return self.info
 
     def get_online_feeder_list(self):
         ## 현재 연결 중인 급이기 ID 리스트 반환 ##
         ## return list -> 예) ["F-01","F-02"]
         feeder_list_online = []
-        for i in self.info:
-            if self.info[i]["connectitity"]:
+        self.get_feeder_state_all()
+        for i in self.feeder_state_list:
+            if self.feeder_state_list[i]:
                 feeder_list_online.append(i)
         return feeder_list_online
     
     def get_feeder_state(self,ID):
         ## ID 급이기의 connectivity 상태 반환 ##
         ## return bool -> 예) True or False
-        return self.feeder_state_list[ID]["connectitity"]
+        self.get_feeder_state_all()
+        return self.feeder_state_list[ID]
     
     def get_feeder_state_all(self):
-        ## 10개 급이기의 connectivity 상태 반환 ##
-        ## return dic -> 예) {"F-01":True,"F-02":True,"F-03":True, ... , "F-10":True}
+        ## ID 급이기의 connectivity 상태 반환 ##
+        ## return bool -> 예) True or False
+        for i in self.info:
+            self.feeder_state_list[i]= self.info[i]["connectivity"]
+        print(self.feeder_state_list)
         return self.feeder_state_list
 
     ## control 함수 ##
