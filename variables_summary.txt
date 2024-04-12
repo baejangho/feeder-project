@@ -89,11 +89,11 @@ cmd = {"type":"set",
 # 스케줄러에서 스케줄 시간이 되면 송부 #
 cmd = {"type":"control",
         "cmd":"start",
-        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_amout":amount}}
+        "value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amout":amount}}
 
 cmd = {"type":"control",
         "cmd":"manual",
-        "value":{"feeding_pace":vel,"feeding_distance":dist,"feeding_amout":amount}}
+        "value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amout":amount}}
 
 cmd = {"type":"control",
         "cmd":"stop",

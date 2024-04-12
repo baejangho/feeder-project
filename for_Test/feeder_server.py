@@ -57,7 +57,8 @@ class Feeder_server:
         cmd_th.daemon = True
         state_th.start()
         cmd_th.start()
-    
+
+    ## TCP/IP 통신을 위한 서버 스레드 ##
     def state_server_thread(self):
         while self.r_state_socks:
             #print('state test')
@@ -127,7 +128,7 @@ class Feeder_server:
                 print('cmd send test')
                 try:
                     next_msg = self.cmd_Queue[s].get_nowait()       # cmd 큐에서 메시지 인출
-                except: #queue.Empty():
+                except: # queue.Empty():
                     self.w_cmd_socks.remove(s)                      # 송신 소켓 목록에서 제거
                 else:
                     json_state_msg = json.dumps(next_msg)
@@ -140,24 +141,7 @@ class Feeder_server:
                 s.close()
                 del self.cmd_Queue[s]
                 
-    def send_cmd(self, cmd, ID='F-01'):
-        if ID in self.feeder_socket_list:
-            sock = self.feeder_socket_list[ID]
-            self.w_cmd_socks.append(sock)
-            self.cmd_Queue[sock].put(cmd)
-        else:
-            print(ID,'는 연결되어 있지 않습니다')
-            #print(self.w_cmd_socks)
-
-    def send_cmd_all(self, cmd):
-        for ID in self.feeder_socket_list:
-            if self.feeder_socket_list[ID]:
-                sock = self.feeder_socket_list[ID]
-                self.w_cmd_socks.append(sock)
-                self.cmd_Queue[sock].put(cmd)
-            else:
-                print(ID,'는 연결되어 있지 않습니다')
-               
+    ## get 함수 ##               
     def get_feeder_info(self,ID="F-01"):
         ## ID 급이기의 정보 반환 ##
         ## return dic -> 
@@ -192,48 +176,124 @@ class Feeder_server:
         ## return dic -> 예) {"F-01":True,"F-02":True,"F-03":True, ... , "F-10":True}
         return self.feeder_state_list
 
+    ## control 함수 ##
     def stop_feeding(self, ID='F-01'):
+        cmd = {"type":"control",
+               "cmd":"stop",
+               "value":""}
         self.send_cmd("stop", ID)
 
     def stop_feeding_all(self):
-        self.send_cmd_all("stop")
+        cmd = {"type":"control",
+               "cmd":"stop",
+               "value":""}
+        self.send_cmd_all(cmd)
     
-    def set_feeding_plan(self, ID='F-01'):
-        self.feeding_plan = {0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},
-                             1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}}
-
+    def manual_feeding(self, pace, dist, amount, ID='F-01'):
+        cmd = {"type":"control","cmd":"manual","value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amout":amount}}
+        self.send_cmd(cmd, ID)
+        
+    def manual_feeding_all(self, pace, dist, amount):
+        cmd = {"type":"control","cmd":"manual","value":{"feeding_pace":pace,"feeding_distance":dist,"feeding_amout":amount}}
+        self.send_cmd_all(cmd)
+   
+    ## set 함수 ##
+    def set_feeding_plan(self, plan, ID='F-01'): 
+        ## ID 급이기의 auto_plan 설정 ##
+        #  plan = {0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},
+        #          1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}}
+        self.feeding_auto_plan[ID] = plan
+        ## 스케줄러 재설정 ##
+        for feeder, jobs in self.feeding_auto_plan.items():
+            for job in jobs.values():
+                schedule.every().day.at(job['start time']).do(self.feeding_start, feeder, job)
+    
+    def set_feeding_plan_all(self, allplan): 
+        ## ID 급이기의 auto_plan 설정 ##
+        #  allplan = {"F-01":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                   1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},\
+        #           "F-02":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                   1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
+        #           "F-03":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                   1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
+        #           "F-04":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                   1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
+        #           "F-05":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
+        #           "F-06":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                     1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
+        #           "F-07":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                    1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
+        #           "F-08":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                  1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},
+        #           "F-09":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                     1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}},\
+        #           "F-10":{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},\
+        #                  1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}}}
+        self.feeding_auto_plan = allplan
+        ## 스케줄러 재설정 ##
+        for feeder, jobs in self.feeding_auto_plan.items():
+            for job in jobs.values():
+                schedule.every().day.at(job['start time']).do(self.feeding_start, feeder, job)
 
     def set_feeder_ID(self,addr, id):
-        # 추후 제작
+        # do not need now "
         pass
 
     def set_feeding_mode(self, mode='auto', ID='F-01'):
+        cmd = {"type":"set",
+               "cmd":"mode",
+               "value":mode}
         self.send_cmd(mode, ID)
     
     def set_feeding_mode_all(self, mode='auto'):
+        cmd = {"type":"set",
+               "cmd":"mode",
+               "value":mode}
         self.send_cmd_all(mode)
         
     def set_feed_size(self, size, ID='F-01'):
-        cmd = 'size'+str(size)
+        cmd = {"type":"set",
+               "cmd":"size",
+               "value":size}
         self.send_cmd(cmd, ID)
     
+    def set_feed_size_all(self, size):
+        cmd = {"type":"set",
+               "cmd":"size",
+               "value":size}
+        self.send_cmd_all(cmd)
+
+    ## 내부 함수 ##    
     def info_updata(self,ID):
         self.feeder_state_list[ID] = self.info[ID]["connectitity"]
         
     def feeding_start(self,feeder, job):
         if self.feeder_socket_list[feeder]:
             print('start')
-            job["pace"]
-            job["spread"]
-            job["feed amount"]
             cmd = {"type":"control",
                    "cmd":"start",
                    "value":{"feeding_pace":job["pace"],"feeding_distance":job["spread"],"feeding_amout":job["feed amount"]}}
             self.send_cmd(cmd, feeder)
 
-        
+    def send_cmd(self, cmd, ID='F-01'):
+        if ID in self.feeder_socket_list:
+            sock = self.feeder_socket_list[ID]
+            self.w_cmd_socks.append(sock)
+            self.cmd_Queue[sock].put(cmd)
+        else:
+            print(ID,'는 연결되어 있지 않습니다')
+            #print(self.w_cmd_socks)
 
-
+    def send_cmd_all(self, cmd):
+        for ID in self.feeder_socket_list:
+            if self.feeder_socket_list[ID]:
+                sock = self.feeder_socket_list[ID]
+                self.w_cmd_socks.append(sock)
+                self.cmd_Queue[sock].put(cmd)
+            else:
+                print(ID,'는 연결되어 있지 않습니다')
+    
 if __name__ == "__main__":
     server_ip = '127.0.0.1'
     state_port = 2200
