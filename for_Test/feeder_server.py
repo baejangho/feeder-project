@@ -117,7 +117,7 @@ class Feeder_server:
                         data = json.loads(data)
                         if data["type"] == "ID":
                             self.feeder_socket_list[data["cmd"]] = s
-                            #print(self.feeder_socket_list)
+                            print(self.feeder_socket_list)
                         else:
                             print('test중')
                     except:
@@ -284,7 +284,9 @@ class Feeder_server:
         self.feeder_state_list[ID] = self.info[ID]["connectivity"]
 
     def feeding_start(self,feeder, job):
-        if self.feeder_socket_list[feeder]:
+        print(job)
+        self.get_feeder_state_all()
+        if self.feeder_state_list[feeder]:
             print('feeding start')
             cmd = {"type":"control",
                    "cmd":"start",
@@ -315,7 +317,7 @@ class Feeder_server:
                 return key
         return None    
 if __name__ == "__main__":
-    server_ip = '127.0.0.1'
+    server_ip = '192.168.0.4'
     state_port = 2200
     cmd_port = 2201
     FS = Feeder_server(server_ip, state_port, cmd_port)

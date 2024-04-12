@@ -14,7 +14,7 @@ def function3():
     print("Function 3 is executed!")
     
 def function4():
-    print(FS.set_feeding_mode("manual","F-01"))
+    print(FS.set_feeding_mode("auto","F-01"))
     print("Function 3 is executed!")
     
 
@@ -32,7 +32,7 @@ button3.grid(row=1, column=0)
 button4 = tk.Button(root, text="Execute Function 4", command=function4)
 button4.grid(row=1, column=1)
 
-server_ip = '127.0.0.1'
+server_ip = '192.168.0.4'
 state_port = 2200
 cmd_port = 2201
 FS = feeder_server.Feeder_server(server_ip, state_port, cmd_port)
