@@ -5,8 +5,6 @@ import threading
 import json
 import time
 import feeder_pid_module
-import feeder_loadcell 
-import feeder_motor
 
 class Feeder_client:
     def __init__(self, ip, state_port=2200, cmd_port=2201):
@@ -22,22 +20,22 @@ class Feeder_client:
         self.feed_size = 3          # 사료 사이즈 : 호
         self.feed_motor_pwm = 0     # feed motor pwm : 0~100  
         self.spread_motor_pwm = 0   # spread motor pwm : 0~100
-        self.feeder_event = {"remains":self.weight_event,
-                             "motor_state":self.motor_event}
         self.weight_event = "enough" # remains : enough feed, low feed
         self.motor_event = "stop"    # motor_state : stop, running, over current
         self.feeding_mode = 'stop'     # feed mode : `auto`, `manual`, `stop`
         self.feeding_distance = 0   # 살포 거리 : m 단위
         self.state_event_period = 1 # sec
+        self.feeder_event = {"remains":self.weight_event,
+                             "motor_state":self.motor_event}
         
         ## PID 제어 parameter ##
         self.control = feeder_pid_module.Pid_control()
         self.feeding_cmd = False
         
         ## loadcell parameter ##
-        self.LC = feeder_loadcell.Loadcell()
+        #self.LC = feeder_loadcell.Loadcell()
         ## motor parameter ##
-        self.MT = feeder_motor.Motor_control()
+        #self.MT = feeder_motor.Motor_control()#
         
         self.event = threading.Event()
         self.init_set()
@@ -124,9 +122,9 @@ class Feeder_client:
                 data = json.loads(data)
                 print(data)
                 if data["type"] == 'ID':
-                    message = {'ID':self.feeder_ID}
-                    json_message = json.dumps(message)
-                    self.cmd_socket.sendall(json_message.encode('UTF-8'))
+                    cmd = {"type":"ID","cmd":self.feeder_ID,"value":""}
+                    json_cmd = json.dumps(cmd)
+                    self.cmd_socket.sendall(json_cmd.encode('UTF-8'))
                     
                 elif data["type"] == 'set':
                     if data["cmd"] == "size":
@@ -243,8 +241,8 @@ class Feeder_client:
                         self.feed_motor_pwm = 0
                         self.spread_motor_pwm = 0
                         self.feed_cmd = False
-                        self.MT.supply_motor_pwm(self.feeding_pwm)
-                        self.MT.spread_motor_pwm(self.spreading_pwm)
+                        #self.MT.supply_motor_pwm(self.feeding_pwm)
+                        #self.MT.spread_motor_pwm(self.spreading_pwm)
                         ## feeding end log ##
                             # 코드 작성 필요   
 
@@ -271,8 +269,8 @@ class Feeder_client:
     def feeder_stop(self):
         self.feed_motor_pwm = 0
         self.spread_motor_pwm = 0
-        self.MT.supply_motor_pwm(self.feed_motor_pwm)
-        self.MT.spread_motor_pwm(self.spread_motor_pwm)
+        #self.MT.supply_motor_pwm(self.feed_motor_pwm)
+        #self.MT.spread_motor_pwm(self.spread_motor_pwm)
         self.feeding_mode = 'stop'
         self.feed_cmd = False
     
@@ -292,6 +290,7 @@ class Feeder_client:
         else:
             self.weight_event = "enough feed"
             return True
+    
     def check_feed_state(self, weight):
         if weight < 0.5:
             self.weight_event = "low feed"
