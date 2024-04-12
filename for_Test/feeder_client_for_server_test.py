@@ -235,7 +235,7 @@ class Feeder_client:
                         self.feed_motor_pwm = 0
                         self.spread_motor_pwm = 0
                         self.feed_cmd = False
-                        self.feeding_mode = 'stop'
+                        #self.feeding_mode = 'stop'
                         #self.MT.supply_motor_pwm(self.feeding_pwm)
                         #self.MT.spread_motor_pwm(self.spreading_pwm)
                         ## feeding end log ##
