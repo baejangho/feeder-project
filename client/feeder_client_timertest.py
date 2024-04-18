@@ -5,8 +5,8 @@ import threading
 import json
 import time
 import feeder_pid_module
-import feeder_loadcell
-import feeder_motor
+#import feeder_loadcell
+#import feeder_motor
 
 class Feeder_client:
     def __init__(self, ip, state_port=2200, cmd_port=2201):
@@ -40,8 +40,8 @@ class Feeder_client:
         #self.LC = feeder_loadcell.Loadcell()
         ## motor parameter ##
         #self.MT = feeder_motor.Motor_control()#
-        self.loadcell = feeder_loadcell.Loadcell()
-        self.motor = feeder_motor.Motor_control()
+        #self.loadcell = feeder_loadcell.Loadcell()
+        #self.motor = feeder_motor.Motor_control()
         
         self.event = threading.Event()
         self.init_set()
@@ -56,8 +56,9 @@ class Feeder_client:
             self.state_socket.connect((self.ip, self.state_port))                    # server로 연결 요청
             self.cmd_socket.connect((self.ip, self.cmd_port))
             self.cmd_thread()
-            self.state_thread()
-            self.control_thread()
+            #self.state_thread()
+            self.state_event()
+            #self.control_thread()
         except:
             print('서버와 연결되지 않았습니다.')
             self.init_set()
@@ -69,52 +70,56 @@ class Feeder_client:
         time.sleep(2)
         self.initialize_socket() 
 
-    def state_thread(self):
-        state_th = threading.Thread(target = self.state_event)
-        state_th.daemon = True
-        state_th.start()
+    #def state_thread(self):
+    #    state_th = threading.Thread(target = self.state_event)
+    #    state_th.daemon = True
+    #    state_th.start()
         
     def cmd_thread(self):
         cmd_th = threading.Thread(target = self.cmd_event)
         cmd_th.daemon = True
         cmd_th.start()
     
-    def control_thread(self):
-        cmd_th = threading.Thread(target = self.control_event)
-        cmd_th.daemon = True
-        cmd_th.start()        
+    # def control_thread(self):
+    #     cmd_th = threading.Thread(target = self.control_event)
+    #     cmd_th.daemon = True
+    #     cmd_th.start()        
     
     def state_event(self):
         # 급이기 정보 server로 전달 #
-        while not self.event.is_set():
-            try:
-                s_time = time.time()
-                state_msg = {'timestamp':time.strftime("%y/%m/%d %H:%M:%S"),
-                            'feeder_ID':self.feeder_ID,
-                            'feed_size':self.feed_size,
-                            'remains':self.weight,
-                            'feed_motor_output':self.feed_motor_pwm,
-                            'spread_motor_output':self.spread_motor_pwm,
-                            'feeding_mode':self.feeding_mode,
-                            'event':self.feeder_event,
-                            'connectivity':True}
-                json_state_msg = json.dumps(state_msg)
-                self.state_socket.sendall(json_state_msg.encode('UTF-8'))
-                duration = time.time() - s_time
-                if self.state_event_period > duration:
-                    time.sleep(self.state_event_period - duration)
-                else:
-                    print('time over')
-                    pass
-            except:
-                print('error in state_event')
-                self.feeder_stop()    
-                self.event.set()  
-                
-        print('state event : 서버와 연결이 끊어졌습니다')
-        print('state event terminated!')     
-        self.state_socket.close()
-        self.init_set()
+        #while not self.event.is_set():
+        state_timer = threading.Timer(1, self.state_event)
+        state_timer.daemon = True
+        print(time.strftime("%y/%m/%d %H:%M:%S"))
+        try:
+            s_time = time.time()
+            state_msg = {'timestamp':time.strftime("%y/%m/%d %H:%M:%S"),
+                        'feeder_ID':self.feeder_ID,
+                        'feed_size':self.feed_size,
+                        'remains':self.weight,
+                        'feed_motor_output':self.feed_motor_pwm,
+                        'spread_motor_output':self.spread_motor_pwm,
+                        'feeding_mode':self.feeding_mode,
+                        'event':self.feeder_event,
+                        'connectivity':True}
+            json_state_msg = json.dumps(state_msg)
+            self.state_socket.sendall(json_state_msg.encode('UTF-8'))
+            duration = time.time() - s_time
+            if self.state_event_period > duration:
+                print('state event duration :', duration)
+            else:
+                print('time over')
+            state_timer.start()   
+        except Exception as e:
+            print('error in state_event:', e)
+            self.feeder_stop()    
+            self.event.set()     
+            print('state event : 서버와 연결이 끊어졌습니다')
+            print('state event terminated!')
+            # log 작성 필요  
+            self.state_socket.close()
+            state_timer.cancel
+            self.init_set()
     
     def cmd_event(self):
         ## server로부터 command 수신 ##
@@ -247,8 +252,8 @@ class Feeder_client:
                         self.spread_motor_pwm = 0
                         self.feed_cmd = False
                         #self.feeding_mode = 'stop'
-                        self.motor.supply_motor_pwm(self.feeding_pwm)
-                        self.motor.spread_motor_pwm(self.spreading_pwm)
+                        #self.motor.supply_motor_pwm(self.feeding_pwm)
+                        #self.motor.spread_motor_pwm(self.spreading_pwm)
                         self.motor_event = "stop"
                         self.feeder_event['motor_state'] = self.motor_event
                         ## feeding end log ##
@@ -270,7 +275,7 @@ class Feeder_client:
                     pass    
             except Exception as e:
                 print('error in control event', e)
-                self.motor.terminate()
+                #self.motor.terminate()
                 break
             
         print('control event terminated!')
@@ -278,8 +283,8 @@ class Feeder_client:
     def feeder_stop(self):
         self.feed_motor_pwm = 0
         self.spread_motor_pwm = 0
-        self.motor.supply_motor_pwm(self.feed_motor_pwm)
-        self.motor.spread_motor_pwm(self.spread_motor_pwm)
+        # self.motor.supply_motor_pwm(self.feed_motor_pwm)
+        # self.motor.spread_motor_pwm(self.spread_motor_pwm)
         self.feeding_mode = 'stop'
         self.feed_cmd = False
     

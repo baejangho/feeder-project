@@ -63,6 +63,7 @@ class Feeder_server:
     ## TCP/IP 통신을 위한 서버 스레드 ##
     def state_server_thread(self):
         while self.r_state_socks:
+            print(time.strftime("%y/%m/%d %H:%M:%S"))
             readEvent, writeEvent, errorEvent = select.select(self.r_state_socks, [], self.r_state_socks, 5)
             
             for s in readEvent:                                      
@@ -317,7 +318,8 @@ class Feeder_server:
                 return key
         return None    
 if __name__ == "__main__":
-    server_ip = '192.168.0.4'
+    #server_ip = '192.168.0.4'
+    server_ip = '127.0.0.1'
     state_port = 2200
     cmd_port = 2201
     FS = Feeder_server(server_ip, state_port, cmd_port)
