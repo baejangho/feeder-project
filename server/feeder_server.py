@@ -317,8 +317,8 @@ class Feeder_server:
                 return key
         return None    
 if __name__ == "__main__":
-    #server_ip = '192.168.0.4'
-    server_ip = '127.0.0.1'
+    server_ip = '192.168.0.30'
+    # server_ip = '127.0.0.1'
     state_port = 2200
     cmd_port = 2201
     FS = Feeder_server(server_ip, state_port, cmd_port)
