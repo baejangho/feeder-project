@@ -201,7 +201,7 @@ class Feeder_client:
         
         try:    
             ## Load_cell ##
-            self.weight = self.loadcell.get_weight(8)
+            self.weight = self.loadcell.get_weight(5)
             cur_weight = self.weight * 1000 # g 단위
             target_weight = self.target_weight * 1000 # g 단위
             feeding_cmd = self.feeding_cmd

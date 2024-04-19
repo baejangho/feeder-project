@@ -7,11 +7,11 @@ import json
 class Loadcell:
     def __init__(self):
         GPIO.setmode(GPIO.BCM)  # set GPIO pin mode to BCM numbering
-        self.hx = HX711(dout_pin=23, pd_sck_pin=24, gain_channel_A=128, select_channel='A')  # create an object
+        self.hx = HX711(dout_pin=23, pd_sck_pin=22, gain_channel_A=128, select_channel='A')  # create an object
         self.load_settings()  # 설정 불러오기      
         
     def set_offset_LC(self):
-        # measure tare and save the value as offset for Left Loadcell
+        # measure  tare and save the value as offset for Left Loadcell
         # 사료를 비운 후 동작해야 함(영점 세팅)
         err = self.hx.zero()
         # check if successful
@@ -37,14 +37,14 @@ class Loadcell:
     def set_scale_ratio_LC(self):
         # In order to calculate the conversion ratio to some units, in my case I want grams,
         # you must have known weight.
-        print('Put 500g weight on the scale')
+        print('Put 1000g weight on the scale')
         for i in range(10):
             print(i,'sec')
             time.sleep(1)
         reading = self.hx.get_data_mean()
         if reading:
             print('Mean value from loadcell subtracted by offset:', reading)
-            known_weight_grams = 500
+            known_weight_grams = 1000
             # set scale ratio for particular channel and gain which is
             # used to calculate the conversion to units. Required argument is only
             # scale ratio. Without arguments 'channel' and 'gain_A' it sets
@@ -63,15 +63,15 @@ class Loadcell:
         }
         with open('calibration.json', 'w') as f:
             json.dump(calibration, f, indent="\t")
-        print("Settings saved to loadcell_settings.json")
+        print("Settings saved to calibration.json")
 
     def load_settings(self):
         try:
-            with open('loadcell_settings.json', 'r') as f:
+            with open('calibration.json', 'r') as f:
                 calibration= json.load(f)
             self.hx.set_offset(calibration['offset'])
             self.hx.set_scale_ratio(calibration['ratio'])
-            print("Settings loaded from loadcell_settings.json")
+            print("Settings loaded from calibration.json")
         except FileNotFoundError:
             print("Settings file not found. Using default settings.")    
 
@@ -86,16 +86,17 @@ class Loadcell:
 if __name__ == "__main__":
     LC = Loadcell()
     try:
-       LC.set_offset_LC() 
-       LC.get_offset_LC()
-       LC.set_scale_ratio_LC()
+       #LC.set_offset_LC() 
+       #LC.get_offset_LC()
+       #LC.set_scale_ratio_LC()
        while True:
            s_time = time.time()
-           LC.get_weight(4)
+           LC.get_weight(8)
            e_time = time.time()
            print('elaped time = ', e_time-s_time)
     except (KeyboardInterrupt, SystemExit):
         print('Bye :)')
 
     finally:
+            
         LC.terminate()
