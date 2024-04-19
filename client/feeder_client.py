@@ -7,8 +7,8 @@ import time
 import feeder_pid_module
 import tkinter as tk
 import datetime 
-#import feeder_loadcell
-#import feeder_motor
+import feeder_loadcell
+import feeder_motor
 
 class Feeder_client:
     def __init__(self, ip, state_port=2200, cmd_port=2201):
@@ -41,16 +41,14 @@ class Feeder_client:
         self.feeding_pace = 0 # kg/min
         
         ## loadcell parameter ##
-        #self.loadcell = feeder_loadcell.Loadcell()
+        self.loadcell = feeder_loadcell.Loadcell()
         ## motor parameter ##
-        #self.MT = feeder_motor.Motor_control()#
-        #self.loadcell = feeder_loadcell.Loadcell()
-        #self.motor = feeder_motor.Motor_control()
+        self.motor = feeder_motor.Motor_control()
         
         self.event = threading.Event()
         self.init_set()
         
-        self.sim = True 
+        self.sim = False 
     
     def initialize_socket(self):
         try:
@@ -110,7 +108,7 @@ class Feeder_client:
             self.event.set()     
             print('state event : 서버와 연결이 끊어졌습니다')
             print('state event terminated!')
-            # log 작성 필요  
+            ## log 작성 필요  
             self.state_socket.close()
             state_timer.cancel()
             self.init_set()
@@ -203,7 +201,7 @@ class Feeder_client:
         
         try:    
             ## Load_cell ##
-            #self.weight = self.loadcell.get_weight(8)
+            self.weight = self.loadcell.get_weight(8)
             cur_weight = self.weight * 1000 # g 단위
             target_weight = self.target_weight * 1000 # g 단위
             feeding_cmd = self.feeding_cmd
@@ -260,12 +258,12 @@ class Feeder_client:
                     
             ## loop time 계산 ##
             duration = time.time() - s_time
-            # if 0.1 > duration:
-            #     #print('control event duration :', duration)
-            #     pass
-            # else:
-            #     print('time over')
-            #     pass
+            if 0.1 > duration:
+                #print('control event duration :', duration)
+                pass
+            else:
+                print('time over')
+                pass
             self.control_duration = duration
             control_timer.start()
         except Exception as e:
