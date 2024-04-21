@@ -202,7 +202,7 @@ class Feeder_server:
         cmd = {"type":"control",
                "cmd":"stop",
                "value":""}
-        self.send_cmd("stop", ID)
+        self.send_cmd(cmd, ID)
 
     def stop_feeding_all(self):
         cmd = {"type":"control",
@@ -304,6 +304,7 @@ class Feeder_server:
         if ID in self.feeder_socket_list:
             sock = self.feeder_socket_list[ID]["socket"]
             self.w_cmd_socks.append(sock)
+            self.cmd_Queue[sock] = queue.Queue()
             self.cmd_Queue[sock].put(cmd)
         else:
             print(ID,'는 연결되어 있지 않습니다')
@@ -314,15 +315,10 @@ class Feeder_server:
             if self.feeder_socket_list[ID]:
                 sock = self.feeder_socket_list[ID]["socket"]
                 self.w_cmd_socks.append(sock)
+                self.cmd_Queue[sock] = queue.Queue()
                 self.cmd_Queue[sock].put(cmd)
             else:
                 print(ID,'는 연결되어 있지 않습니다')
-
-    def get_key_from_value(self, dictionary, target_value):
-        for key, value in dictionary.items():
-            if value == target_value:
-                return key
-        return None
                  
 if __name__ == "__main__":
     #server_ip = '192.168.0.30'
