@@ -1,33 +1,33 @@
 import time
 
-info = {"F-01":{"feeder_ID":"F-01","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+info = {"F-01":{"feeder_ID":"F-01",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")},\
-        "F-02":{"feeder_ID":"F-02","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+        "F-02":{"feeder_ID":"F-02",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")},\
-        "F-03":{"feeder_ID":"F-03","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+        "F-03":{"feeder_ID":"F-03",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")},\
-        "F-04":{"feeder_ID":"F-04","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+        "F-04":{"feeder_ID":"F-04",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")},\
-        "F-05":{"feeder_ID":"F-05","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+        "F-05":{"feeder_ID":"F-05",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")},\
-        "F-06":{"feeder_ID":"F-06","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+        "F-06":{"feeder_ID":"F-06",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")},\
-        "F-07":{"feeder_ID":"F-07","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+        "F-07":{"feeder_ID":"F-07",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")},\
-        "F-08":{"feeder_ID":"F-08","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+        "F-08":{"feeder_ID":"F-08",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")},\
-        "F-09":{"feeder_ID":"F-09","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+        "F-09":{"feeder_ID":"F-09",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")},\
-        "F-10":{"feeder_ID":"F-10","feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
+        "F-10":{"feeder_ID":"F-10",'ip_address':'0.0.0.0',"feed_size":3,"remains":5,"feed_motor_ouput":0,"spread_motor_ouput":0,\
                 "feed_mode":"stop","event":{"remains":"enough feed","motor_state":"stop"},\
                 "connectivity":False,"time":time.strftime("%y/%m/%d %H:%M:%S")}}
 

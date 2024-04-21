@@ -2,8 +2,8 @@ import tkinter as tk
 from feeder_client import Feeder_client
 
 # Feeder_client 객체를 생성합니다.
-# server_ip = '127.0.0.1' # server ip
-server_ip = '192.168.0.4'
+server_ip = '127.0.0.1' # server ip
+#server_ip = '192.168.0.4'
 Feeder_01 = Feeder_client(server_ip,2200,2201)
 
 # Tk 객체를 생성합니다.
@@ -20,6 +20,8 @@ for i, key in enumerate(Feeder_01.feeder_state.keys()):
 
     value_label = tk.Label(root, textvariable=label_var)
     value_label.grid(row=i, column=1)
+
+
 
 def update_labels():
     # state_msg 딕셔너리의 각 키-값 쌍에 대해 StringVar 객체의 값을 업데이트합니다.

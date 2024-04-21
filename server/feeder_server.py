@@ -26,7 +26,8 @@ class Feeder_server:
             for job in jobs.values():
                 schedule.every().day.at(job['start time']).do(self.feeding_start, feeder, job)
                                                  
-        self.feeder_socket_list = {}                            # 급이기 ID와 client socket 저장 예) {"F-01":socket정보}  
+        self.feeder_socket_list = {}                            # 급이기 ID와 client socket 저장 예) {"F-01":{"ip":ip,"socket":s}}
+        self.feeder_id_dic = {}                                 # 급이기 ID와 client socket 저장 예) {"ip":"F-01"}
         self.feeder_state_list = {}                             # 급이기 ID의 연결상태 저장 예) {"F-01":True, "F-02":True, ... , "F-10":False}
         for i in self.info:
             self.feeder_state_list[i]= self.info[i]["connectivity"]
@@ -58,6 +59,7 @@ class Feeder_server:
         state_th.daemon = True
         cmd_th.daemon = True
         state_th.start()
+        time.sleep(1)
         cmd_th.start()
 
     ## TCP/IP 통신을 위한 서버 스레드 ##
@@ -76,11 +78,12 @@ class Feeder_server:
                     try:
                         data = s.recv(self.BUFFER)
                         data = json.loads(data)
-                        #print(time.strftime("%y/%m/%d %H:%M:%S"),'-',data)
                         self.info[data["feeder_ID"]] = data
                         self.info_updata(data["feeder_ID"])
-                 
-                    except:                                         # 연결이 종료되었는가?
+                        if data["ip_address"] not in self.feeder_id_dic.keys():
+                            self.feeder_id_dic[data["ip_address"]] = data["feeder_ID"]                
+                    except Exception as e:
+                        print('error in state_event:', e)                                       # 연결이 종료되었는가?
                         self.r_state_socks.remove(s)
                         print('state_th : client',s,'연결이 종료되었습니다.')
                         s.close()
@@ -101,29 +104,30 @@ class Feeder_server:
                 if s is self.cmd_server_socket:                     # 서버 소켓?
                     print("cmd client 접속 중")
                     c_sock, c_address = s.accept()
-                    print(c_sock, "가 접속함")
+                    print(c_address[0], "가 접속함")
+                    feeder_id = self.feeder_id_dic.get(c_address[0])
+                    self.feeder_socket_list[feeder_id] = {"ip":c_address[0],"socket":c_sock}
+                    print(self.feeder_socket_list)
                     c_sock.setblocking(0)
-                    cmd = {"type":"ID",
-                           "cmd":"",
-                           "value":""}
-                    self.cmd_Queue[c_sock] = queue.Queue()          # FIFO 큐 생성 self.cmd_Queue = {c_sock : (que),c_sock2 : (que)}
-                    self.cmd_Queue[c_sock].put(cmd)
+                    # cmd = {"type":"ID",
+                    #        "cmd":"",
+                    #        "value":""}
+                    # self.cmd_Queue[c_sock] = queue.Queue()          # FIFO 큐 생성 self.cmd_Queue = {c_sock : (que),c_sock2 : (que)}
+                    # self.cmd_Queue[c_sock].put(cmd)
                     self.r_cmd_socks.append(c_sock)
-                    if s not in self.w_cmd_socks:
-                        self.w_cmd_socks.append(c_sock) 
+                    # if s not in self.w_cmd_socks:
+                    #     self.w_cmd_socks.append(c_sock) 
                 else:                                               # 클라이언트 소켓 : 급이기에서 보낸 메시지 확인
                     try:
                         data = s.recv(self.BUFFER)
                         data = json.loads(data)
-                        if data["type"] == "ID":
-                            self.feeder_socket_list[data["cmd"]] = s
-                            print(self.feeder_socket_list)
-                        else:
-                            print('test중')
+                        print("무엇이 출력됨?:",data)
+
                     except:
                         print(s)
-                        ID = self.get_key_from_value(self.feeder_socket_list, s)
-                        print(ID)
+                        for feeder_id, value in self.feeder_socket_list.items():
+                            if value["socket"] == s:
+                                ID = feeder_id
                         self.info[ID]["connectivity"] = False
                         del self.feeder_socket_list[ID]
                         
@@ -131,7 +135,8 @@ class Feeder_server:
                             self.w_cmd_socks.remove(s)
                         self.r_cmd_socks.remove(s)
                         s.close()
-                        del self.cmd_Queue[s]
+                        if s in self.cmd_Queue:
+                            del self.cmd_Queue[s]
                         print('cmd_th : client',s,'연결이 종료되었습니다.')
             
             for s in writeEvent:                                    # 쓰기 가능 소켓 조사        
@@ -144,11 +149,13 @@ class Feeder_server:
                     s.sendall(json_state_msg.encode('UTF-8'))
             
             for s in errorEvent:                                    # 오류 발생 소켓 조사
+                print("에러발생!에러발생!")
                 self.r_cmd_socks.remove(s)                          # 수시 소켓 목록에서 제거
                 if s in self.w_cmd_socks:
                     self.w_cmd_socks.remove(s)
                 s.close()
-                del self.cmd_Queue[s]
+                if s in self.cmd_Queue:
+                    del self.cmd_Queue[s]
                 
     ## get 함수 ##               
     def get_feeder_info(self,ID="F-01"):
@@ -295,7 +302,7 @@ class Feeder_server:
 
     def send_cmd(self, cmd, ID='F-01'):
         if ID in self.feeder_socket_list:
-            sock = self.feeder_socket_list[ID]
+            sock = self.feeder_socket_list[ID]["socket"]
             self.w_cmd_socks.append(sock)
             self.cmd_Queue[sock].put(cmd)
         else:
@@ -305,7 +312,7 @@ class Feeder_server:
     def send_cmd_all(self, cmd):
         for ID in self.feeder_socket_list:
             if self.feeder_socket_list[ID]:
-                sock = self.feeder_socket_list[ID]
+                sock = self.feeder_socket_list[ID]["socket"]
                 self.w_cmd_socks.append(sock)
                 self.cmd_Queue[sock].put(cmd)
             else:
@@ -315,10 +322,11 @@ class Feeder_server:
         for key, value in dictionary.items():
             if value == target_value:
                 return key
-        return None    
+        return None
+                 
 if __name__ == "__main__":
-    server_ip = '192.168.0.30'
-    # server_ip = '127.0.0.1'
+    #server_ip = '192.168.0.30'
+    server_ip = '127.0.0.1'
     state_port = 2200
     cmd_port = 2201
     FS = Feeder_server(server_ip, state_port, cmd_port)
