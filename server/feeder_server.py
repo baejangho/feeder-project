@@ -81,8 +81,7 @@ class Feeder_server:
                         self.info[data["feeder_ID"]] = data
                         self.info_updata(data["feeder_ID"])
                         if data["ip_address"] not in self.feeder_id_dic.keys():
-                            self.feeder_id_dic[data["ip_address"]] = data["feeder_ID"]
-                        print(self.feeder_id_dic)               
+                            self.feeder_id_dic[data["ip_address"]] = data["feeder_ID"]          
                     except Exception as e:
                         print('error in state_event:', e)                                       # 연결이 종료되었는가?
                         self.r_state_socks.remove(s)
@@ -100,14 +99,12 @@ class Feeder_server:
             
             ## cmd 소켓 조사 ##
             readEvent, writeEvent, errorEvent = select.select(self.r_cmd_socks, self.w_cmd_socks, self.r_cmd_socks, 1)
-            
             for s in readEvent:                                     # 읽기 가능 소켓 조사
                 if s is self.cmd_server_socket:                     # 서버 소켓?
                     print("cmd client 접속 중")
                     c_sock, c_address = s.accept()
                     print(c_address[0], "가 접속함")
                     feeder_id = self.feeder_id_dic.get(c_address[0])
-                    print(feeder_id)
                     self.feeder_socket_list[feeder_id] = {"ip":c_address[0],"socket":c_sock}
                     print(self.feeder_socket_list)
                     c_sock.setblocking(0)

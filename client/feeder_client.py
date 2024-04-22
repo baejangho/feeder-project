@@ -332,9 +332,9 @@ class Feeder_client:
                     'feeder_ID':self.feeder_ID,
                     'ip_address':self.ip_address,
                     'feed_size':self.feed_size,
-                    'remains':self.weight,
-                    'feed_motor_output':self.feed_motor_pwm,
-                    'spread_motor_output':self.spread_motor_pwm,
+                    'remains':round(self.weight,2),
+                    'feed_motor_output':round(self.feed_motor_pwm,1),
+                    'spread_motor_output':round(self.spread_motor_pwm,1),
                     'feeding_mode':self.feeding_mode,
                     'event':self.feeder_event,
                     'connectivity':self.connectivity}
