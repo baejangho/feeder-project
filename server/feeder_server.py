@@ -199,6 +199,9 @@ class Feeder_server:
         #print(self.feeder_state_list)
         return self.feeder_state_list
 
+    def get_feeding_plan_all(self):
+        return self.feeding_auto_plan
+
     ## control 함수 ##
     def stop_feeding(self, ID='F-01'):
         cmd = {"type":"control",
