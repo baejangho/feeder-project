@@ -59,7 +59,7 @@ class Feeder_server:
         state_th.daemon = True
         cmd_th.daemon = True
         state_th.start()
-        time.sleep(1)
+        time.sleep(3)
         cmd_th.start()
 
     ## TCP/IP 통신을 위한 서버 스레드 ##
@@ -81,7 +81,8 @@ class Feeder_server:
                         self.info[data["feeder_ID"]] = data
                         self.info_updata(data["feeder_ID"])
                         if data["ip_address"] not in self.feeder_id_dic.keys():
-                            self.feeder_id_dic[data["ip_address"]] = data["feeder_ID"]                
+                            self.feeder_id_dic[data["ip_address"]] = data["feeder_ID"]
+                        print(self.feeder_id_dic)               
                     except Exception as e:
                         print('error in state_event:', e)                                       # 연결이 종료되었는가?
                         self.r_state_socks.remove(s)
@@ -106,6 +107,7 @@ class Feeder_server:
                     c_sock, c_address = s.accept()
                     print(c_address[0], "가 접속함")
                     feeder_id = self.feeder_id_dic.get(c_address[0])
+                    print(feeder_id)
                     self.feeder_socket_list[feeder_id] = {"ip":c_address[0],"socket":c_sock}
                     print(self.feeder_socket_list)
                     c_sock.setblocking(0)
