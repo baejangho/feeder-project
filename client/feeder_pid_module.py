@@ -2,7 +2,7 @@
 
 class Pid_control:
  
-    def __init__(self, _min=0, _max=100, _kp=2000, _ki=0.17, _kd=0):
+    def __init__(self, _min=0, _max=100, _kp=2, _ki=0.00017, _kd=0):
         self.update(_min, _max, _kp, _ki, _kd)
  
     def update(self, _min, _max, _kp, _ki, _kd):
@@ -15,30 +15,34 @@ class Pid_control:
         self.integral = 0
  
     def calc(self, dt, sv, pv):
-        error = sv - pv
-        # 비례
-        kp = self.kp * error
+        try:
+            error = sv - pv
+            # 비례
+            kp = self.kp * error
  
-        # 적분
-        self.integral += error * dt
-        ki = self.ki * self.integral
- 
-        # 미분
-        kd = (error - self.pre_error) / dt
-        kd = self.kd * kd
- 
-        # 합산
-        result = kp + ki + kd
- 
-        if result > self.max:
-            result = self.max
-        elif result < self.min:
-            result = self.min
- 
-        self.pre_error = error
- 
-        #description
-        #desc = f'Kp :\t{kp:.3f}\nKi :\t{ki:.3f}\nKd :\t{kd:.3f}\nPv :\t{pv:.3f}\nSv :\t{sv:.3f}'
+            # 적분
+            self.integral += error * dt
+            ki = self.ki * self.integral
+    
+            # 미분              
+            kd = (error - self.pre_error) / dt
+            kd = self.kd * kd
+    
+            # 합산
+            result = -(kp + ki + kd)
+            
+            if result > self.max:
+                result = self.max
+            elif result < self.min:
+                result = self.min
+            print('pwm result:',result)
+            self.pre_error = error
+    
+            #description
+            #desc = f'Kp :\t{kp:.3f}\nKi :\t{ki:.3f}\nKd :\t{kd:.3f}\nPv :\t{pv:.3f}\nSv :\t{sv:.3f}'
+        except:
+            result = 0
+            print("pid problem")
  
         return result#, desc
     

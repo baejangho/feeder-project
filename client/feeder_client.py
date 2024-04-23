@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-sim = True
+sim = False
 
 import socket
 import threading
@@ -46,6 +46,7 @@ class Feeder_client:
         self.feeding_pace = 0 # kg/min
         self.previous_feed_amount = None
         self.feed_change_per_second = None
+        self.prev_weight = None
         
         if sim == False:
             ## loadcell parameter ##
@@ -93,15 +94,16 @@ class Feeder_client:
         #print(time.strftime("%y/%m/%d %H:%M:%S"))
         try:
             if sim == False:
-                current_feed_amount = round(self.loadcell.get_weight(4) * 1000,0) # g 단위
+                current_feed_amount = round(self.weight * 1000,0)
             else:
-                current_feed_amount = self.weight * 1000
+                current_feed_amount = round(self.weight * 1000,0)
             if self.previous_feed_amount is not None and self.previous_time is not None:
                 # 이전에 측정한 사료량과 시간과 현재 측정한 사료량과 시간의 차이를 계산합니다.
-                time_difference = s_time - self.previous_time
+                time_difference = (s_time - self.previous_time)
                 feed_change = current_feed_amount - self.previous_feed_amount
                 self.feed_change_per_second = round(feed_change / time_difference,2)
                 print('사료량 변화율:', self.feed_change_per_second)
+            print('current feed amount:',current_feed_amount)
             # 현재 시간과 사료량을 저장합니다.
             self.previous_time = s_time
             self.previous_feed_amount = current_feed_amount
@@ -185,7 +187,7 @@ class Feeder_client:
                         self.init_weight = self.weight  # kg
                         self.feeding_amount = data["value"]["feeding_amount"] # kg 
                         self.target_weight = self.init_weight - self.feeding_amount # kg
-                        print(self.target_weight)                        
+                        print("target weight:",self.target_weight)                        
                         ## 남은 사료량 확인 ##
                         if self.check_feeding_amount(self.target_weight):
                             self.feeder_stop()
@@ -222,12 +224,22 @@ class Feeder_client:
         s_time = time.time()  
         control_timer = None  # state_timer를 None으로 초기화 
         # 0.1초 loop : 로드셀, pid 제어 진행
-        dt = 0.1
+        dt = 0.2
         
         try:    
             if sim == False:
                 ## Load_cell ##
-                self.weight = self.loadcell.get_weight(4)
+                self.weight = self.loadcell.get_weight(4)/1000
+                print("real:",self.weight)
+                if self.weight == 0:
+                    self.weight = self.prev_weight
+                if self.prev_weight is not None:
+                    if abs(self.prev_weight - self.weight) > 0.2:
+                        self.weight = self.prev_weight
+                        pass
+                        #self.weight = self.prev_weight
+                print("after:",self.weight)
+                self.prev_weight = self.weight 
             ## 제어 파라미터 ##
             cur_weight = self.weight * 1000 # g 단위
             target_weight = self.target_weight * 1000 # g 단위
@@ -242,15 +254,21 @@ class Feeder_client:
                 ## feeding 진행 ##
                 if cur_weight > target_weight:     # 목표 사료량 달성 전    
                     desired_weight = self.desired_weight * 1000 # g 단위
+                    print('pidtest')
                     feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
-                    spreading_pwm = 30 #self.dist2pwm(self.feed_distance)
+                    feeding_pwm = 15
+                    spreading_pwm = 20 #self.dist2pwm(self.feed_distance)
                     if sim == True:
                         ## loadcell simulation ##
                         self.weight = self.weight - dt * feeding_pace / 1000   # kg 단위
                     else:
                         ## real operation ##
-                        self.motor.supply_motor_pwm(feeding_pwm)
-                        self.motor.spread_motor_pwm(spreading_pwm)
+                        print('motor pwm change')
+                        if feeding_pwm == self.feed_motor_pwm:
+                            pass
+                        else:
+                            self.motor.supply_motor_pwm (feeding_pwm)
+                            self.motor.spread_motor_pwm(spreading_pwm)
                         
                     ## 현재 motor pwm 업데이트 ##
                     self.feed_motor_pwm = feeding_pwm
@@ -264,12 +282,13 @@ class Feeder_client:
                     self.feeder_state_update()
                     
                 else:   # 목표 사료량 달성 후
+                    print("feeed end")
                     self.feed_motor_pwm = 0
                     self.spread_motor_pwm = 0
-                    self.feed_cmd = False
+                    self.feeding_cmd = False
                     if sim == False:
-                        self.motor.supply_motor_pwm(self.feeding_pwm)
-                        self.motor.spread_motor_pwm(self.spreading_pwm)
+                        self.motor.supply_motor_pwm(self.feed_motor_pwm)
+                        self.motor.spread_motor_pwm(self.spread_motor_pwm)
                     self.motor_event = "stop"
                     self.feeder_event['motor_state'] = self.motor_event
                     self.feeder_state_update()
@@ -286,7 +305,7 @@ class Feeder_client:
                     
             ## loop time 계산 ##
             duration = time.time() - s_time
-            if 0.1 > duration:
+            if dt > duration:
                 #print('control event duration :', duration)
                 pass
             else:
@@ -297,18 +316,23 @@ class Feeder_client:
             control_timer.start()
         except Exception as e:
             print('error in control event', e)
+            self.feeder_stop()
+            self.motor.terminate()
             if control_timer is not None:
                 control_timer.cancel()
             print('control event terminated!')  
-    
+        
     def feeder_stop(self):
         self.feed_motor_pwm = 0
         self.spread_motor_pwm = 0
-        # self.motor.supply_motor_pwm(self.feed_motor_pwm)
-        # self.motor.spread_motor_pwm(self.spread_motor_pwm)
+        if sim == False:
+            self.motor.supply_motor_pwm(self.feed_motor_pwm)
+            self.motor.spread_motor_pwm(self.spread_motor_pwm)
         self.feeding_mode = 'stop'
         self.feed_cmd = False
         # feeder_state update
+        self.motor_event = "stop"
+        self.feeder_event['motor_state'] = self.motor_event
         self.feeder_state_update()
     
     def set_feed_size(self, size):
