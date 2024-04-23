@@ -44,6 +44,8 @@ class Feeder_client:
         self.feeding_cmd = False
         self.target_weight = 0 # kg
         self.feeding_pace = 0 # kg/min
+        self.previous_feed_amount = None
+        self.feed_change_per_second = None
         
         if sim == False:
             ## loadcell parameter ##
@@ -90,6 +92,20 @@ class Feeder_client:
         
         #print(time.strftime("%y/%m/%d %H:%M:%S"))
         try:
+            if sim == False:
+                current_feed_amount = round(self.loadcell.get_weight(4) * 1000,0) # g 단위
+            else:
+                current_feed_amount = self.weight * 1000
+            if self.previous_feed_amount is not None and self.previous_time is not None:
+                # 이전에 측정한 사료량과 시간과 현재 측정한 사료량과 시간의 차이를 계산합니다.
+                time_difference = s_time - self.previous_time
+                feed_change = current_feed_amount - self.previous_feed_amount
+                self.feed_change_per_second = round(feed_change / time_difference,2)
+                print('사료량 변화율:', self.feed_change_per_second)
+            # 현재 시간과 사료량을 저장합니다.
+            self.previous_time = s_time
+            self.previous_feed_amount = current_feed_amount
+            
             self.connectivity = True
             state_msg = self.feeder_state_update()
             json_state_msg = json.dumps(state_msg)
