@@ -77,7 +77,7 @@ class Loadcell:
 
     def get_weight(self, num=20):
         data = self.hx.get_weight_mean(num)
-        print(data, 'g')
+        #print(data, 'g')
         return data
     
     def terminate(self):

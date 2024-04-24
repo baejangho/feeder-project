@@ -3,8 +3,8 @@ from feeder_server import Feeder_server
 import ast
 
 # Feeder_client 객체를 생성합니다.
-server_ip = '127.0.0.1' # server ip
-#server_ip = '192.168.0.4'
+#server_ip = '127.0.0.1' # server ip
+server_ip = '192.168.0.4'
 server = Feeder_server(server_ip,2200,2201)
 
 # Tk 객체를 생성합니다.
@@ -180,7 +180,7 @@ manual_feeding_plan_label1.grid(row=1, column=0,sticky='n')
 manual_feeding_plan_label2 = tk.Label(control_frame, text='(pace, distance, amount)', font=('Arial', 10))
 manual_feeding_plan_label2.grid(row=2, column=0,sticky='n')
 manual_feeding_plan_entry = tk.Entry(control_frame)
-manual_feeding_plan_entry.insert(0, "(20,1.5,1)")
+manual_feeding_plan_entry.insert(0, "(1,1.5,0.5)")
 manual_feeding_plan_entry.grid(row=1, column=1)
 
 ## Plan 프레임에 내용 추가
@@ -190,7 +190,7 @@ auto_feeding_plan_label.grid(row=1, column=0,sticky='w')
 auto_feeding_plan_label = tk.Label(plan_frame, text='Auto plan all', font=('Arial', 10))
 auto_feeding_plan_label.grid(row=5, column=0,sticky='w')
 auto_feeding_plan_entry = tk.Entry(plan_frame, width=50)
-auto_feeding_plan_entry.insert(0, "{0:{'start time' : '09:00','pace' : 50,'spread':1.5, 'feed amount' : 1.5},1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}}")
+auto_feeding_plan_entry.insert(0, "{0:{'start time' : '09:00','pace' : 1,'spread':1.5, 'feed amount' : 0.5},1:{'start time' : '16:00','pace' : 0,'spread':1.5, 'feed amount' : 1.5}}")
 auto_feeding_plan_entry.grid(row=2, column=0)
 auto_feeding_plan_all_label = tk.Label(plan_frame, text='Auto plan all', font=('Arial', 10))
 auto_feeding_plan_all_label.grid(row=3, column=0)

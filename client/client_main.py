@@ -2,8 +2,8 @@ import tkinter as tk
 from feeder_client import Feeder_client
 
 # Feeder_client 객체를 생성합니다.
-server_ip = '127.0.0.1' # server ip
-#server_ip = '192.168.0.4'
+#server_ip = '127.0.0.1' # server ip
+server_ip = '192.168.0.4'
 Feeder_01 = Feeder_client(server_ip,2200,2201)
 
 # Tk 객체를 생성합니다.
@@ -35,10 +35,16 @@ def update_labels():
 # update_labels 함수를 호출합니다.
 update_labels()
 
+def on_closing():
+    print("Window is closing")
+    root.destroy()
+
 # UI를 실행합니다.
 try:
+    root.protocol("WM_DELETE_WINDOW", on_closing)
     update_labels()
     root.mainloop()
 except KeyboardInterrupt:
-        print('사용자종료')
-        root.destroy()
+    print('사용자종료')   
+    root.destroy()
+    Feeder_01.motor.terminate()
