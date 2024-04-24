@@ -2,8 +2,8 @@ import tkinter as tk
 from feeder_client import Feeder_client
 
 # Feeder_client 객체를 생성합니다.
-#server_ip = '127.0.0.1' # server ip
-server_ip = '192.168.0.4'
+server_ip = '127.0.0.1' # server ip
+# server_ip = '192.168.0.4'
 Feeder_01 = Feeder_client(server_ip,2200,2201)
 
 # Tk 객체를 생성합니다.
@@ -11,7 +11,7 @@ root = tk.Tk()
 
 # state_msg 딕셔너리의 각 키에 대해 StringVar 객체와 Label 위젯을 생성합니다.
 label_vars = {}
-for i, key in enumerate(Feeder_01.feeder_state.keys()):
+for i, key in enumerate(Feeder_01.state_msg.keys()):
     label_var = tk.StringVar()
     label_vars[key] = label_var
 
@@ -25,8 +25,8 @@ for i, key in enumerate(Feeder_01.feeder_state.keys()):
 
 def update_labels():
     # state_msg 딕셔너리의 각 키-값 쌍에 대해 StringVar 객체의 값을 업데이트합니다.
-    #print(Feeder_01.feeder_state)
-    for key, value in Feeder_01.feeder_state.items():
+    #print(Feeder_01.state_msg)
+    for key, value in Feeder_01.state_msg.items():
         label_vars[key].set(value)
 
     # 200ms 후에 이 함수를 다시 호출합니다.
