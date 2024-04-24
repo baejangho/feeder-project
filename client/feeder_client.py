@@ -43,7 +43,7 @@ class Feeder_client:
         
         self.event = threading.Event()
         self.init_set()
-        self.control_event()
+        self.control_thread()
     
     def initialize_socket(self):
         try:
@@ -76,11 +76,16 @@ class Feeder_client:
             self.motor.spread_motor_pwm(self.spread_motor_pwm)
         time.sleep(2)
         if not self.control_loop:
-            self.control_event()
+            self.control_thread()
         self.initialize_socket() 
         
     def cmd_thread(self):
         cmd_th = threading.Thread(target = self.cmd_event)
+        cmd_th.daemon = True
+        cmd_th.start() 
+    
+    def control_thread(self):
+        cmd_th = threading.Thread(target = self.control_event)
         cmd_th.daemon = True
         cmd_th.start() 
     
@@ -219,122 +224,137 @@ class Feeder_client:
     
     def control_event(self):
         ## loop 시작 시간 ##
-        #print('control event')
-        s_time = time.time()  
-        control_timer = None  # state_timer를 None으로 초기화 
         # 0.1초 loop : 로드셀, pid 제어 진행
-        dt = 0.2
-        
-        try:
-            self.control_loop = True   # control loop 상태 변경(활성)   
-            if sim == False:
-                ## Load_cell ##
-                feed_weight = self.loadcell.get_weight(5)/1000 # kg 단위
-                print("real:",feed_weight)
-                if feed_weight == 0:
-                    self.feed_weight = self.prev_feed_weight
-                elif self.prev_feed_weight is not None:
-                    if abs(self.prev_feed_weight - feed_weight) > 0.1:
+        dt = 0.1
+        duration = 0.1
+        while True:
+            
+            #print('control event')
+            s_time = time.time()
+            time_str = datetime.datetime.fromtimestamp(time.time()).strftime("%H:%M:%S.%f")
+            time_str = time_str[:-5]
+            print('loop time:',time_str)
+            control_timer = None  # state_timer를 None으로 초기화 
+            
+            
+            try:
+                self.control_loop = True   # control loop 상태 변경(활성)   
+                if sim == False:
+                    ## Load_cell ##
+                    feed_weight = self.loadcell.get_weight(4)/1000 # kg 단위
+                    print("real:",feed_weight)
+                    if feed_weight == 0:
                         self.feed_weight = self.prev_feed_weight
+                    elif self.prev_feed_weight is not None:
+                        if abs(self.prev_feed_weight - feed_weight) > 0.1:
+                            self.feed_weight = self.prev_feed_weight
+                        else:
+                            self.feed_weight = feed_weight
                     else:
                         self.feed_weight = feed_weight
-                else:
-                    self.feed_weight = feed_weight
-                print("after:",round(self.feed_weight,3))
-                ## state_msg update ##
-                self.state_msg['remains'] = round(self.feed_weight,3)
+                    print("after:",round(self.feed_weight,3))
+                    ## state_msg update ##
+                    self.state_msg['remains'] = round(self.feed_weight,3)
+                    
+                    self.prev_feed_weight = self.feed_weight
+                    
+                ## 제어 파라미터 ##
+                cur_weight = self.feed_weight * 1000 # g 단위
+                target_weight = self.target_weight * 1000 # g 단위
+                feeding_cmd = self.feeding_cmd
+                feeding_pace = self.feeding_pace * 1000 / 60 # g/s 단위
+                ## feeding_mode ##
+                feeding_mode = self.state_msg['feeding_mode']
+                ## 주기적으로 남은 사료량 확인 ##
+                self.check_feed_state(cur_weight)   # g 단위로 check
                 
-                self.prev_feed_weight = self.feed_weight
-                
-            ## 제어 파라미터 ##
-            cur_weight = self.feed_weight * 1000 # g 단위
-            target_weight = self.target_weight * 1000 # g 단위
-            feeding_cmd = self.feeding_cmd
-            feeding_pace = self.feeding_pace * 1000 / 60 # g/s 단위
-            ## feeding_mode ##
-            feeding_mode = self.state_msg['feeding_mode']
-            ## 주기적으로 남은 사료량 확인 ##
-            self.check_feed_state(cur_weight)   # g 단위로 check
-            
-            if (feeding_mode == 'auto' or feeding_mode == "manual") & feeding_cmd == True:
-                ## feeding 진행 ##
-                if cur_weight > target_weight:     # 목표 사료량 달성 전    
-                    desired_weight = self.desired_weight * 1000 # g 단위
-                    #print('pidtest')
-                    feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
-                    #feeding_pwm = 20
-                    spreading_pwm = 20 #self.dist2pwm(self.feed_distance)
-                    if sim == True:
-                        ## loadcell simulation ##
-                        self.feed_weight = self.feed_weight - dt * feeding_pace / 1000   # kg 단위
-                        ## state_msg update ##
-                        self.state_msg['remains'] = round(self.feed_weight,2)
-                    else:
-                        ## real operation ##
-                        print('motor pwm change')
-                        if feeding_pwm == self.feeding_motor_pwm:
-                            pass
+                if (feeding_mode == 'auto' or feeding_mode == "manual") & feeding_cmd == True:
+                    ## feeding 진행 ##
+                    if cur_weight > target_weight:     # 목표 사료량 달성 전    
+                        desired_weight = self.desired_weight * 1000 # g 단위
+                        #print('pidtest')
+                        feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
+                        #feeding_pwm = 20
+                        spreading_pwm = 20 #self.dist2pwm(self.feed_distance)
+                        if sim == True:
+                            ## loadcell simulation ##
+                            self.feed_weight = self.feed_weight - dt * feeding_pace / 1000   # kg 단위
+                            ## state_msg update ##
+                            self.state_msg['remains'] = round(self.feed_weight,2)
                         else:
-                            self.motor.supply_motor_pwm(feeding_pwm)
-                            self.motor.spread_motor_pwm(spreading_pwm)
+                            ## real operation ##
+                            print('motor pwm change')
+                            if feeding_pwm == self.feeding_motor_pwm:
+                                pass
+                            else:
+                                self.motor.supply_motor_pwm(feeding_pwm)
+                                self.motor.spread_motor_pwm(spreading_pwm)
+                            
+                        ## 현재 motor pwm 업데이트 ##
+                        self.feeding_motor_pwm = feeding_pwm
+                        self.spread_motor_pwm = spreading_pwm
+                        ## state_msg update ##
+                        self.state_msg['feeding_motor_output'] = self.feeding_motor_pwm
+                        self.state_msg['spread_motor_output'] = self.spread_motor_pwm
                         
-                    ## 현재 motor pwm 업데이트 ##
-                    self.feeding_motor_pwm = feeding_pwm
-                    self.spread_motor_pwm = spreading_pwm
-                    ## state_msg update ##
-                    self.state_msg['feeding_motor_output'] = self.feeding_motor_pwm
-                    self.state_msg['spread_motor_output'] = self.spread_motor_pwm
-                    
-                    ## PID제어를 위한 다음 desired weight 계산 ##
-                    self.desired_weight = self.control.desired_weight_calc(dt, feeding_pace/1000, desired_weight/1000) # kg 단위
-                    print('desired weight:',self.desired_weight)
-                    ## state_msg update ##
-                    self.state_msg['event']['motor_state'] = 'running'
-                    
-                else:   # 목표 사료량 달성 후
-                    print("feeed end")
-                    self.feeding_motor_pwm = 0
-                    self.spread_motor_pwm = 0
-                    ## state_msg update ##
-                    self.state_msg['feeding_motor_output'] = self.feeding_motor_pwm
-                    self.state_msg['spread_motor_output'] = self.spread_motor_pwm
-                    self.feeding_cmd = False
-                    if sim == False:
-                        self.motor.supply_motor_pwm(self.feeding_motor_pwm)
-                        self.motor.spread_motor_pwm(self.spread_motor_pwm)
-                    ## state_msg update ##
-                    self.state_msg['event']['motor_state'] = 'stop'
-                    ## feeding end log ##
-                        # 코드 작성 필요   
+                        ## PID제어를 위한 다음 desired weight 계산 ##
+                        if abs(self.desired_weight - target_weight) < 0.05:
+                            self.desired_weight = target_weight 
+                        else:  
+                            self.desired_weight = self.control.desired_weight_calc(duration, feeding_pace/1000, desired_weight/1000) # kg 단위
+                        print('desired weight:',self.desired_weight)
+                        ## state_msg update ##
+                        self.state_msg['event']['motor_state'] = 'running'
+                        
+                    else:   # 목표 사료량 달성 후
+                        print("feeed end")
+                        self.feeding_motor_pwm = 0
+                        self.spread_motor_pwm = 0
+                        ## state_msg update ##
+                        self.state_msg['feeding_motor_output'] = self.feeding_motor_pwm
+                        self.state_msg['spread_motor_output'] = self.spread_motor_pwm
+                        self.feeding_cmd = False
+                        if sim == False:
+                            self.motor.supply_motor_pwm(self.feeding_motor_pwm)
+                            self.motor.spread_motor_pwm(self.spread_motor_pwm)
+                        ## state_msg update ##
+                        self.state_msg['event']['motor_state'] = 'stop'
+                        ## feeding end log ##
+                            # 코드 작성 필요   
 
-            elif feeding_mode == 'stop':
-                #print('feeding stop : feed_mode = stop')
-                self.feeder_stop()
-            else:
-                pass
-                    
-            ## loop time 계산 ##
-            duration = time.time() - s_time
-            if dt > duration:
-                #print('control event duration :', duration)
-                pass
-            else:
-                print('time over')
-                pass
-            control_timer = threading.Timer(max(1-duration,0), self.control_event)
-            control_timer.daemon = True
-            control_timer.start()
+                elif feeding_mode == 'stop':
+                    #print('feeding stop : feed_mode = stop')
+                    self.feeder_stop()
+                else:
+                    pass
+                        
+                ## loop time 계산 ##
+                duration = time.time() - s_time
+                print('duration',duration)
+                if dt > duration:
+                    print('control event duration :', duration)
+                    time.sleep((dt-duration))
+                    pass
+                else:
+                    print('time over')
+                    pass
+                # control_timer = threading.Timer(max((dt-duration),0.01), self.control_event)
+                # control_timer.daemon = True
+                # control_timer.start()
+                # print('timer start')
+         
             
-        except Exception as e:
-            self.control_loop = False   # control loop 상태 변경(비활성)
-            print('error in control event', e)
-            self.feeder_stop()
-            if sim == False:
-                self.motor.terminate()
-            if control_timer is not None:
-                control_timer.cancel()
-            print('control event terminated!')  
-        
+            
+            except Exception as e:
+                self.control_loop = False   # control loop 상태 변경(비활성)
+                print('error in control event', e)
+                self.feeder_stop()
+                if sim == False:
+                    self.motor.terminate()
+                if control_timer is not None:
+                    control_timer.cancel()
+                print('control event terminated!')  
+            
     def feeder_stop(self):
         self.feeding_motor_pwm = 0
         self.spread_motor_pwm = 0
