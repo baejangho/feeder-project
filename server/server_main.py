@@ -180,7 +180,7 @@ manual_feeding_plan_label1.grid(row=1, column=0,sticky='n')
 manual_feeding_plan_label2 = tk.Label(control_frame, text='(pace, distance, amount)', font=('Arial', 10))
 manual_feeding_plan_label2.grid(row=2, column=0,sticky='n')
 manual_feeding_plan_entry = tk.Entry(control_frame)
-manual_feeding_plan_entry.insert(0, "(1,1.5,0.5)")
+manual_feeding_plan_entry.insert(0, "(0.2,1.5,0.2)")
 manual_feeding_plan_entry.grid(row=1, column=1)
 
 ## Plan 프레임에 내용 추가
