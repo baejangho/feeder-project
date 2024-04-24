@@ -45,5 +45,6 @@ try:
     update_labels()
     root.mainloop()
 except KeyboardInterrupt:
-        print('사용자종료')
-        root.destroy()
+    print('사용자종료')   
+    root.destroy()
+    Feeder_01.motor.terminate()

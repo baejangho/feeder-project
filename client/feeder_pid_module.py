@@ -19,28 +19,49 @@ class Pid_control:
             error = sv - pv
             # 비례
             kp = self.kp * error
+<<<<<<< HEAD
     
+=======
+ 
+>>>>>>> 0f485d4ee6512b869702ceb3eaf98bc8c8068537
             # 적분
             self.integral += error * dt
             ki = self.ki * self.integral
     
+<<<<<<< HEAD
             # 미분
+=======
+            # 미분              
+>>>>>>> 0f485d4ee6512b869702ceb3eaf98bc8c8068537
             kd = (error - self.pre_error) / dt
             kd = self.kd * kd
     
             # 합산
             result = -(kp + ki + kd)
+<<<<<<< HEAD
     
+=======
+            
+>>>>>>> 0f485d4ee6512b869702ceb3eaf98bc8c8068537
             if result > self.max:
                 result = self.max
             elif result < self.min:
                 result = self.min
             print('pwm result:',result)
             self.pre_error = error
+<<<<<<< HEAD
         except:
             result = 0 
         #description
         #desc = f'Kp :\t{kp:.3f}\nKi :\t{ki:.3f}\nKd :\t{kd:.3f}\nPv :\t{pv:.3f}\nSv :\t{sv:.3f}'
+=======
+    
+            #description
+            #desc = f'Kp :\t{kp:.3f}\nKi :\t{ki:.3f}\nKd :\t{kd:.3f}\nPv :\t{pv:.3f}\nSv :\t{sv:.3f}'
+        except:
+            result = 0
+            print("pid problem")
+>>>>>>> 0f485d4ee6512b869702ceb3eaf98bc8c8068537
  
         return result#, desc
     
