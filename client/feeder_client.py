@@ -42,8 +42,9 @@ class Feeder_client:
             self.motor = feeder_motor.Motor_control()
         
         self.event = threading.Event()
-        self.init_set()
         self.control_thread()
+        self.init_set()
+        
     
     def initialize_socket(self):
         try:
