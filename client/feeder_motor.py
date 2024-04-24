@@ -45,7 +45,7 @@ class Motor_control:
         GPIO.cleanup()
 
 if __name__ == "__main__":
-    MT = Motor_manual()
+    MT = Motor_control()
     try:
            MT.supply_motor_pwm(20)
            time.sleep(1)

@@ -19,23 +19,22 @@ class Feeder_client:
         self.ip = ip                                 # server ip
         self.state_port = state_port                 # server state port
         self.cmd_port = cmd_port                     # server cmd port
-        self.BUFFER = 10240                          # buffer max size
+        self.BUFFER = 2**15                          # buffer max size
         
         ## feeder state parameter 초기화 ##
-        self.feeder_ID = 'F-01'
-        self.weight = 4.0           # 사료잔량 : kg 단위
-        self.feed_size = 3          # 사료 사이즈 : 호
-        self.feed_motor_pwm = 0     # feed motor pwm : 0~100  
-        self.spread_motor_pwm = 0   # spread motor pwm : 0~100
-        self.weight_event = "enough feed" # remains : enough feed, low feed
-        self.motor_event = "stop"    # motor_state : stop, running, over current
-        self.feeding_mode = "stop"     # feed mode : `auto`, `manual`, `stop`
-        self.feeding_distance = 0   # 살포 거리 : m 단위
-        self.state_event_period = 1 # sec
+        self.feeder_ID = 'F-02'
+        self.weight = 10.0              # 사료잔량 : kg 단위
+        self.feed_size = 3              # 사료 사이즈 : 호
+        self.feeding_motor_pwm = 0         # feed motor pwm : 0~100  
+        self.spread_motor_pwm = 0       # spread motor pwm : 0~100
+        self.weight_event = "enough feed"   # remains_state : enough feed, low feed
+        self.motor_event = "stop"           # motor_state : stop, running, over current
+        self.feeding_mode = "stop"      # feed mode : "auto", "manual", "stop"
+        self.feeding_distance = 0       # 살포 거리 : m 단위
+        self.state_event_period = 1     # sec
         self.connectivity = False
         self.feeder_event = {"remains_state":self.weight_event,
                              "motor_state":self.motor_event}
-        self.cmd_data = {}
         self.ip_address = "0.0.0.0"
         self.feeder_state_update()
         
@@ -45,7 +44,7 @@ class Feeder_client:
         self.target_weight = 0 # kg
         self.feeding_pace = 0 # kg/min
         self.previous_feed_amount = None
-        self.feed_change_per_second = None
+        self.previous_time = None
         
         if sim == False:
             ## loadcell parameter ##
@@ -75,7 +74,7 @@ class Feeder_client:
     
     def init_set(self):
         print('서버와 접속을 시도합니다')
-        self.feed_motor_pwm = 0
+        self.feeding_motor_pwm = 0
         self.spread_motor_pwm = 0
         time.sleep(2)
         self.initialize_socket() 
@@ -93,15 +92,15 @@ class Feeder_client:
         #print(time.strftime("%y/%m/%d %H:%M:%S"))
         try:
             if sim == False:
-                current_feed_amount = round(self.loadcell.get_weight(4) * 1000,0) # g 단위
+                current_feed_amount = round(self.weight * 1000,0) # g 단위
             else:
-                current_feed_amount = self.weight * 1000
+                current_feed_amount = round(self.weight * 1000,0) # g 단위
             if self.previous_feed_amount is not None and self.previous_time is not None:
                 # 이전에 측정한 사료량과 시간과 현재 측정한 사료량과 시간의 차이를 계산합니다.
                 time_difference = s_time - self.previous_time
                 feed_change = current_feed_amount - self.previous_feed_amount
-                self.feed_change_per_second = round(feed_change / time_difference,2)
-                print('사료량 변화율:', self.feed_change_per_second)
+                feed_change_per_second = round(feed_change / time_difference,2)
+                print('사료량 변화율:', feed_change_per_second)
             # 현재 시간과 사료량을 저장합니다.
             self.previous_time = s_time
             self.previous_feed_amount = current_feed_amount
@@ -139,7 +138,6 @@ class Feeder_client:
                 ## command에 따른 logic coding ##
                 data = self.cmd_socket.recv(self.BUFFER) 
                 data = json.loads(data)
-                self.cmd_data = data
                 print(data)
                 if data["type"] == 'ID':
                     cmd = {"type":"ID","cmd":self.feeder_ID,"value":""}
@@ -185,7 +183,7 @@ class Feeder_client:
                         self.init_weight = self.weight  # kg
                         self.feeding_amount = data["value"]["feeding_amount"] # kg 
                         self.target_weight = self.init_weight - self.feeding_amount # kg
-                        print(self.target_weight)                        
+                        print("target_weight:",self.target_weight)                        
                         ## 남은 사료량 확인 ##
                         if self.check_feeding_amount(self.target_weight):
                             self.feeder_stop()
@@ -222,12 +220,12 @@ class Feeder_client:
         s_time = time.time()  
         control_timer = None  # state_timer를 None으로 초기화 
         # 0.1초 loop : 로드셀, pid 제어 진행
-        dt = 0.1
+        dt = 0.2
         
         try:    
             if sim == False:
                 ## Load_cell ##
-                self.weight = self.loadcell.get_weight(4)
+                self.weight = self.loadcell.get_weight(8)/1000 # kg 단위
             ## 제어 파라미터 ##
             cur_weight = self.weight * 1000 # g 단위
             target_weight = self.target_weight * 1000 # g 단위
@@ -253,7 +251,7 @@ class Feeder_client:
                         self.motor.spread_motor_pwm(spreading_pwm)
                         
                     ## 현재 motor pwm 업데이트 ##
-                    self.feed_motor_pwm = feeding_pwm
+                    self.feeding_motor_pwm = feeding_pwm
                     self.spread_motor_pwm = spreading_pwm
                     
                     ## PID제어를 위한 다음 desired weight 계산 ##
@@ -264,12 +262,13 @@ class Feeder_client:
                     self.feeder_state_update()
                     
                 else:   # 목표 사료량 달성 후
-                    self.feed_motor_pwm = 0
+                    print("feed end")
+                    self.feeding_motor_pwm = 0
                     self.spread_motor_pwm = 0
-                    self.feed_cmd = False
+                    self.feeding_cmd = False
                     if sim == False:
-                        self.motor.supply_motor_pwm(self.feeding_pwm)
-                        self.motor.spread_motor_pwm(self.spreading_pwm)
+                        self.motor.supply_motor_pwm(self.feeding_motor_pwm)
+                        self.motor.spread_motor_pwm(self.spread_motor_pwm)
                     self.motor_event = "stop"
                     self.feeder_event['motor_state'] = self.motor_event
                     self.feeder_state_update()
@@ -302,10 +301,13 @@ class Feeder_client:
             print('control event terminated!')  
     
     def feeder_stop(self):
-        self.feed_motor_pwm = 0
+        self.feeding_motor_pwm = 0
         self.spread_motor_pwm = 0
-        # self.motor.supply_motor_pwm(self.feed_motor_pwm)
-        # self.motor.spread_motor_pwm(self.spread_motor_pwm)
+        if sim == False:
+            self.motor.supply_motor_pwm(self.feeding_motor_pwm)
+            self.motor.spread_motor_pwm(self.spread_motor_pwm)
+        self.motor_event = "stop"
+        self.feeder_event['motor_state'] = self.motor_event
         self.feeding_mode = 'stop'
         self.feed_cmd = False
         # feeder_state update
@@ -349,7 +351,7 @@ class Feeder_client:
                     'ip_address':self.ip_address,
                     'feed_size':self.feed_size,
                     'remains':round(self.weight,2),
-                    'feed_motor_output':round(self.feed_motor_pwm,1),
+                    'feed_motor_output':round(self.feeding_motor_pwm,1),
                     'spread_motor_output':round(self.spread_motor_pwm,1),
                     'feeding_mode':self.feeding_mode,
                     'event':self.feeder_event,
