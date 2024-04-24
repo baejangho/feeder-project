@@ -3,7 +3,7 @@ from feeder_client import Feeder_client
 
 # Feeder_client 객체를 생성합니다.
 #server_ip = '127.0.0.1' # server ip
-server_ip = '192.168.0.5'
+server_ip = '192.168.0.4'
 Feeder_01 = Feeder_client(server_ip,2200,2201)
 
 # Tk 객체를 생성합니다.
@@ -48,3 +48,4 @@ except KeyboardInterrupt:
     print('사용자종료')   
     root.destroy()
     Feeder_01.motor.terminate()
+    Feeder_01.loadcell.terminate()

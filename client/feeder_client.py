@@ -40,15 +40,14 @@ class Feeder_client:
             self.loadcell = feeder_loadcell.Loadcell()
             ## motor parameter ##
             self.motor = feeder_motor.Motor_control()
-        
+        self.event = threading.Event()
         self.control_thread()
         self.init_set()
         
     
     def initialize_socket(self):
         try:
-            self.event.clear()
-            self.event = threading.Event()
+                       
             self.state_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)       # state socket 생성
             self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # state socket 생성
             self.state_socket.connect((self.ip, self.state_port))                    # server로 연결 요청
