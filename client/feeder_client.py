@@ -23,6 +23,7 @@ class Feeder_client:
         
         ## feeder state parameter 초기화 ##
         self.feeder_ID = 'F-01'
+        self.ip_address = "0.0.0.0"
         self.weight = 4.0           # 사료잔량 : kg 단위
         self.feed_size = 3          # 사료 사이즈 : 호
         self.feed_motor_pwm = 0     # feed motor pwm : 0~100  
@@ -36,7 +37,7 @@ class Feeder_client:
         self.feeder_event = {"remains_state":self.weight_event,
                              "motor_state":self.motor_event}
         self.cmd_data = {}
-        self.ip_address = "0.0.0.0"
+        
         self.feeder_state_update()
         
         ## PID 제어 parameter ##
