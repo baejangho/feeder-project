@@ -225,7 +225,7 @@ class Feeder_client:
     def control_event(self):
         ## loop 시작 시간 ##
         # 0.1초 loop : 로드셀, pid 제어 진행
-        dt = 0.25
+        dt = 0.2
         duration = 0.1
         while True:
             
@@ -240,22 +240,26 @@ class Feeder_client:
             try:
                 self.control_loop = True   # control loop 상태 변경(활성)   
                 if sim == False:
-                    ## Load_cell ##
-                    feed_weight = self.loadcell.get_weight(4)/1000 # kg 단위
-                    print("real:",feed_weight)
-                    if feed_weight == 0:
-                        self.feed_weight = self.prev_feed_weight
-                    elif self.prev_feed_weight is not None:
-                        if abs(self.prev_feed_weight - feed_weight) > 0.1:
+                    if self.feeding_cmd == True: 
+                        ## Load_cell ##
+                        feed_weight = self.loadcell.get_weight(4)/1000 # kg 단위
+                        print("real:",feed_weight)
+                        if feed_weight == 0:
                             self.feed_weight = self.prev_feed_weight
+                        elif self.prev_feed_weight is not None:
+                            if abs(self.prev_feed_weight - feed_weight) > 0.1:
+                                self.feed_weight = self.prev_feed_weight
+                            else:
+                                self.feed_weight = feed_weight
                         else:
                             self.feed_weight = feed_weight
+                        print("after:",round(self.feed_weight,3))
+                        
                     else:
+                        feed_weight = self.loadcell.get_weight(4)/1000 # kg 단위
                         self.feed_weight = feed_weight
-                    print("after:",round(self.feed_weight,3))
                     ## state_msg update ##
                     self.state_msg['remains'] = round(self.feed_weight,3)
-                    
                     self.prev_feed_weight = self.feed_weight
                     
                 ## 제어 파라미터 ##
@@ -298,10 +302,10 @@ class Feeder_client:
                         self.state_msg['spread_motor_output'] = self.spread_motor_pwm
                         
                         ## PID제어를 위한 다음 desired weight 계산 ##
-                        if abs(self.desired_weight - target_weight) < 0.05:
+                        if abs(self.desired_weight - target_weight) < 0.1:
                             self.desired_weight = target_weight 
                         else:  
-                            self.desired_weight = self.control.desired_weight_calc(duration, feeding_pace/1000, desired_weight/1000) # kg 단위
+                            self.desired_weight = self.control.desired_weight_calc(dt, feeding_pace/1000, desired_weight/1000) # kg 단위
                         print('desired weight:',self.desired_weight)
                         ## state_msg update ##
                         self.state_msg['event']['motor_state'] = 'running'
