@@ -41,14 +41,14 @@ class Feeder_client:
             ## motor parameter ##
             self.motor = feeder_motor.Motor_control()
         
-        self.event = threading.Event()
         self.control_thread()
         self.init_set()
         
     
     def initialize_socket(self):
         try:
-            self.event.clear() 
+            self.event.clear()
+            self.event = threading.Event()
             self.state_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)       # state socket 생성
             self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # state socket 생성
             self.state_socket.connect((self.ip, self.state_port))                    # server로 연결 요청
@@ -67,14 +67,14 @@ class Feeder_client:
     
     def init_set(self):
         print('서버와 접속을 시도합니다')
-        self.feeding_motor_pwm = 0
-        self.spread_motor_pwm = 0
+        # self.feeding_motor_pwm = 0
+        # self.spread_motor_pwm = 0
         ## state_msg update ##
-        self.state_msg['feeding_motor_output'] = self.feeding_motor_pwm
-        self.state_msg['spread_motor_output'] = self.spread_motor_pwm
-        if sim == False:
-            self.motor.supply_motor_pwm(self.feeding_motor_pwm)
-            self.motor.spread_motor_pwm(self.spread_motor_pwm)
+        # self.state_msg['feeding_motor_output'] = self.feeding_motor_pwm
+        # self.state_msg['spread_motor_output'] = self.spread_motor_pwm
+        # if sim == False:
+        #     self.motor.supply_motor_pwm(self.feeding_motor_pwm)
+        #     self.motor.spread_motor_pwm(self.spread_motor_pwm)
         time.sleep(2)
         if not self.control_loop:
             self.control_thread()
