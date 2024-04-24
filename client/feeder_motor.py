@@ -48,11 +48,11 @@ if __name__ == "__main__":
     MT = Motor_control()
     try:
         #MT.supply_motor_pwm(20)
-        time.sleep(3)
-        MT.supply_motor_pwm(90)
-        MT.spread_motor_pwm(20)
-        time.sleep(1)
+        MT.supply_motor_pwm(100)
         MT.spread_motor_pwm(0)
+        time.sleep(10)
+        MT.spread_motor_pwm(0)
+        MT.supply_motor_pwm(0)
 
     except (KeyboardInterrupt, SystemExit):
         print('Bye :)')

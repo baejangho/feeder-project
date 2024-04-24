@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-sim = True
+sim = False
 
 import socket
 import threading
@@ -100,8 +100,8 @@ class Feeder_client:
                 time_difference = (s_time - self.previous_time)
                 feed_change = current_feed_amount - self.previous_feed_amount
                 self.feed_change_per_second = round(feed_change / time_difference,2)
-                print('사료량 변화율:', self.feed_change_per_second)
-            print('current feed amount:',current_feed_amount)
+                #print('사료량 변화율:', self.feed_change_per_second)
+            #print('current feed amount:',current_feed_amount)
             # 현재 시간과 사료량을 저장합니다.
             self.previous_time = s_time
             self.previous_feed_amount = current_feed_amount
@@ -219,7 +219,7 @@ class Feeder_client:
     
     def control_event(self):
         ## loop 시작 시간 ##
-        print('control event')
+        #print('control event')
         s_time = time.time()  
         control_timer = None  # state_timer를 None으로 초기화 
         # 0.1초 loop : 로드셀, pid 제어 진행
@@ -229,16 +229,20 @@ class Feeder_client:
             self.control_loop = True   # control loop 상태 변경(활성)   
             if sim == False:
                 ## Load_cell ##
-                self.feed_weight = self.loadcell.get_weight(4)/1000 # kg 단위
-                print("real:",self.feed_weight)
-                if self.feed_weight == 0:
+                feed_weight = self.loadcell.get_weight(5)/1000 # kg 단위
+                print("real:",feed_weight)
+                if feed_weight == 0:
                     self.feed_weight = self.prev_feed_weight
-                if self.prev_feed_weight is not None:
-                    if abs(self.prev_feed_weight - self.feed_weight) > 0.2:
+                elif self.prev_feed_weight is not None:
+                    if abs(self.prev_feed_weight - feed_weight) > 0.1:
                         self.feed_weight = self.prev_feed_weight
-                print("after:",self.feed_weight)
+                    else:
+                        self.feed_weight = feed_weight
+                else:
+                    self.feed_weight = feed_weight
+                print("after:",round(self.feed_weight,3))
                 ## state_msg update ##
-                self.state_msg['remains'] = round(self.feed_weight,2)
+                self.state_msg['remains'] = round(self.feed_weight,3)
                 
                 self.prev_feed_weight = self.feed_weight
                 
@@ -256,9 +260,9 @@ class Feeder_client:
                 ## feeding 진행 ##
                 if cur_weight > target_weight:     # 목표 사료량 달성 전    
                     desired_weight = self.desired_weight * 1000 # g 단위
-                    print('pidtest')
+                    #print('pidtest')
                     feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
-                    feeding_pwm = 15
+                    #feeding_pwm = 20
                     spreading_pwm = 20 #self.dist2pwm(self.feed_distance)
                     if sim == True:
                         ## loadcell simulation ##
@@ -283,6 +287,7 @@ class Feeder_client:
                     
                     ## PID제어를 위한 다음 desired weight 계산 ##
                     self.desired_weight = self.control.desired_weight_calc(dt, feeding_pace/1000, desired_weight/1000) # kg 단위
+                    print('desired weight:',self.desired_weight)
                     ## state_msg update ##
                     self.state_msg['event']['motor_state'] = 'running'
                     
