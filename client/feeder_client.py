@@ -225,7 +225,7 @@ class Feeder_client:
     def control_event(self):
         ## loop 시작 시간 ##
         # 0.1초 loop : 로드셀, pid 제어 진행
-        dt = 0.1
+        dt = 0.25
         duration = 0.1
         while True:
             
