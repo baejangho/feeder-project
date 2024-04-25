@@ -46,8 +46,7 @@ class Feeder_client:
         
     
     def initialize_socket(self):
-        try:
-                       
+        try:           
             self.state_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)       # state socket 생성
             self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # state socket 생성
             self.state_socket.connect((self.ip, self.state_port))                    # server로 연결 요청
