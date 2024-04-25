@@ -37,6 +37,8 @@ update_labels()
 
 def on_closing():
     print("Window is closing")
+    Feeder_01.motor.terminate()
+    Feeder_01.loadcell.terminate()  
     root.destroy()
 
 # UI를 실행합니다.
