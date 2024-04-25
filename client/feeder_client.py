@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-sim = False
+sim = True
 
 import socket
 import threading
