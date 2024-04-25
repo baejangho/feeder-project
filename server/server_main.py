@@ -4,7 +4,7 @@ import ast
 
 # Feeder_client 객체를 생성합니다.
 server_ip = '127.0.0.1' # server ip
-#server_ip = '192.168.0.4'
+# server_ip = '192.168.0.51'
 server = Feeder_server(server_ip,2200,2201)
 
 # Tk 객체를 생성합니다.
@@ -295,6 +295,7 @@ def update_labels():
                 status_vars[i][status].set(server.get_feeder_info(feeder)['event'][status])
             else:
                 status_vars[i][status].set(server.get_feeder_info(feeder)[status])
+    #Feeder_server.get_feeder_state('F-01')
 
     # 초당 속도 측정(g/s)
     # 200ms 후에 이 함수를 다시 호출합니다.

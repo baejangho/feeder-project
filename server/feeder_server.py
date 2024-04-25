@@ -66,7 +66,7 @@ class Feeder_server:
     def state_server_thread(self):
         while self.r_state_socks:
             readEvent, writeEvent, errorEvent = select.select(self.r_state_socks, [], self.r_state_socks, 5)
-            
+            print('state_server_thread')
             for s in readEvent:                                      
                 if s is self.state_server_socket: # 서버 소켓에서 읽기 이벤트 발생                   
                     print("client 접속 중")

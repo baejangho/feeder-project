@@ -23,7 +23,8 @@ class Feeder_client:
         
         ## feeder state parameter 초기화 ##
         self.state_msg = self.feeder_state_init()
-        self.feed_weight = 10.0
+        self.feed_weight = 20.0
+        self.state_msg['remains'] = self.feed_weight
 
         ## PID 제어 parameter ##
         self.control = feeder_pid_module.Pid_control()
