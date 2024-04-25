@@ -59,7 +59,7 @@ class Feeder_server:
         state_th.daemon = True
         cmd_th.daemon = True
         state_th.start()
-        time.sleep(3)
+        # time.sleep(3)
         cmd_th.start()
 
     ## TCP/IP 통신을 위한 서버 스레드 ##
@@ -98,15 +98,19 @@ class Feeder_server:
             schedule.run_pending()
             
             ## cmd 소켓 조사 ##
-            readEvent, writeEvent, errorEvent = select.select(self.r_cmd_socks, self.w_cmd_socks, self.r_cmd_socks, 1)
+            readEvent, writeEvent, errorEvent = select.select(self.r_cmd_socks, self.w_cmd_socks, self.r_cmd_socks, 2)
             for s in readEvent:                                     # 읽기 가능 소켓 조사
                 if s is self.cmd_server_socket:                     # 서버 소켓?
                     print("cmd client 접속 중")
                     c_sock, c_address = s.accept()
                     print(c_address[0], "가 접속함")
-                    feeder_id = self.feeder_id_dic.get(c_address[0])
-                    self.feeder_socket_list[feeder_id] = {"ip":c_address[0],"socket":c_sock}
-                    print(self.feeder_socket_list)
+                    while True:
+                        feeder_id = self.feeder_id_dic.get(c_address[0])
+                        self.feeder_socket_list[feeder_id] = {"ip":c_address[0],"socket":c_sock}
+                        print(self.feeder_socket_list)
+                        if feeder_id is not None:
+                            break
+                        time.sleep(0.5)
                     c_sock.setblocking(0)
                     # cmd = {"type":"ID",
                     #        "cmd":"",
