@@ -266,6 +266,7 @@ class Feeder_client:
                 target_weight = self.target_weight * 1000 # g 단위
                 feeding_cmd = self.feeding_cmd
                 feeding_pace = self.feeding_pace * 1000 / 60 # g/s 단위
+                feeding_distance = self.feeding_distance
                 ## feeding_mode ##
                 feeding_mode = self.state_msg['feeding_mode']
                 ## 주기적으로 남은 사료량 확인 ##

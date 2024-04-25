@@ -26,12 +26,12 @@ class Motor_control:
         pwm = self.spread_modtor_distance2pwm(dist)
         self.pwm2.change_duty_cycle(pwm)
     
-    def spread_modtor_distance2pwm(self, dist: float):
-        if dist < 0.3:
-            dist = 0.3
+    def spread_motor_distance2pwm(self, dist: float):
+        if dist < 0.7:
+            dist = 0.7
             print("최소 거리는 0.3 m 입니다.")
-        if dist > 4.5:
-            dist = 4.5
+        if dist > 2.5:
+            dist = 2.5
             print("최대 거리는 4.5 m 입니다.")
         pwm = 60 * dist - 170
         return pwm
