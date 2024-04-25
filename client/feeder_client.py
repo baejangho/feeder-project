@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-sim = True
+sim = False
 
 import socket
 import threading
@@ -279,7 +279,8 @@ class Feeder_client:
                         #print('pidtest')
                         feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
                         #feeding_pwm = 20
-                        spreading_pwm = 20 #self.dist2pwm(self.feed_distance)
+                        spreading_pwm = self.dist2pwm(feeding_distance)
+                        #spreading_pwm = 30
                         if sim == True:
                             ## loadcell simulation ##
                             self.feed_weight = self.feed_weight - dt * feeding_pace / 1000   # kg 단위
