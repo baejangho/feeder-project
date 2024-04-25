@@ -45,7 +45,6 @@ class Feeder_client:
         self.control_thread()
         self.init_set()
         
-    
     def initialize_socket(self):
         try:           
             self.state_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)       # state socket 생성
@@ -234,7 +233,7 @@ class Feeder_client:
             time_str = datetime.datetime.fromtimestamp(time.time()).strftime("%H:%M:%S.%f")
             time_str = time_str[:-5]
             print('loop time:',time_str)
-            control_timer = None  # state_timer를 None으로 초기화 
+            # control_timer = None  # state_timer를 None으로 초기화 
             
             
             try:
@@ -355,8 +354,8 @@ class Feeder_client:
                 self.feeder_stop()
                 if sim == False:
                     self.motor.terminate()
-                if control_timer is not None:
-                    control_timer.cancel()
+                # if control_timer is not None:
+                #     control_timer.cancel()
                 print('control event terminated!')  
             
     def feeder_stop(self):
