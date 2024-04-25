@@ -2,6 +2,7 @@
 import RPi.GPIO as GPIO  # import GPIO
 from rpi_hardware_pwm import HardwarePWM
 import time
+import numpy as np
 
 class Motor_control:
     def __init__(self):
@@ -27,13 +28,17 @@ class Motor_control:
         self.pwm2.change_duty_cycle(pwm)
     
     def spread_motor_distance2pwm(self, dist: float):
-        if dist < 0.7:
-            dist = 0.7
-            print("최소 거리는 0.3 m 입니다.")
-        if dist > 2.5:
-            dist = 2.5
-            print("최대 거리는 4.5 m 입니다.")
-        pwm = 60 * dist - 170
+        dist_values = np.array([0.7, 1.1, 1.4, 1.8, 2.4, 2.8])
+        pwm_values = np.array([20, 30, 40, 50, 60, 70])
+
+        if dist < dist_values[0]:
+            dist = dist_values[0]
+            print("최소 거리는 0.7 m 입니다.")
+        if dist > dist_values[-1]:
+            dist = dist_values[-1]
+            print("최대 거리는 2.8 m 입니다.")
+
+        pwm = np.interp(dist, dist_values, pwm_values)
         return pwm
 
     def terminate(self):
