@@ -226,11 +226,12 @@ class Feeder_client:
         print('cmd event terminated!')
         self.cmd_socket.close()
     def LC_event(self):
-        try:
-            feed_weight = self.ML.get_weight(10)/1000 # kg 단위
-            self.feed_weight = feed_weight
-            self.prev_feed_weight = self.feed_weight
-            while True:
+        
+        feed_weight = self.ML.get_weight(10)/1000 # kg 단위
+        self.feed_weight = feed_weight
+        self.prev_feed_weight = self.feed_weight
+        while True:
+            try:
                 feed_weight = self.ML.get_weight(4)/1000 # kg 단위
                 print("real:",feed_weight)
                 if self.prev_feed_weight is not None:
@@ -249,8 +250,8 @@ class Feeder_client:
                 self.prev_feed_weight = self.feed_weight
                 self.state_msg['remains'] = round(self.feed_weight,2)
                 time.sleep(0.01)
-        except:
-            print('error in LC_event')
+            except:
+                print('error in LC_event')
             
         
     def control_event(self):
