@@ -10,8 +10,7 @@ import feeder_pid_module
 import tkinter as tk
 import datetime 
 if sim == False:
-    import feeder_loadcell
-    import feeder_motor
+    import motor_loadcell
 
 class Feeder_client:
     def __init__(self, ip, state_port=2200, cmd_port=2201):
@@ -38,10 +37,9 @@ class Feeder_client:
         self.feeding_distance = 1.5
         
         if sim == False:
-            ## loadcell parameter ##
-            self.loadcell = feeder_loadcell.Loadcell()
-            ## motor parameter ##
-            self.motor = feeder_motor.Motor_control()
+            ## motor and loadcell parameter ##
+            self.ML = motor_loadcell.Loadcell()
+            
         self.event = threading.Event()
         self.control_thread()
         self.init_set()
@@ -72,8 +70,8 @@ class Feeder_client:
         # self.state_msg['feeding_motor_output'] = self.feeding_motor_pwm
         # self.state_msg['spread_motor_output'] = self.spread_motor_pwm
         # if sim == False:
-        #     self.motor.supply_motor_pwm(self.feeding_motor_pwm)
-        #     self.motor.spread_motor_pwm(self.spread_motor_pwm)
+        #     self.ML.supply_motor_pwm(self.feeding_motor_pwm)
+        #     self.ML.spread_motor_pwm(self.spread_motor_pwm)
         time.sleep(2)
         if not self.control_loop:
             self.control_thread()
@@ -242,7 +240,7 @@ class Feeder_client:
                 if sim == False:
                     if self.feeding_cmd == True: 
                         ## Load_cell ##
-                        feed_weight = self.loadcell.get_weight(4)/1000 # kg 단위
+                        feed_weight = self.ML.get_weight(4)/1000 # kg 단위
                         print("real:",feed_weight)
                         if feed_weight == 0:
                             self.feed_weight = self.prev_feed_weight
@@ -256,7 +254,7 @@ class Feeder_client:
                         print("after:",round(self.feed_weight,3))
                         
                     else:
-                        feed_weight = self.loadcell.get_weight(4)/1000 # kg 단위
+                        feed_weight = self.ML.get_weight(4)/1000 # kg 단위
                         self.feed_weight = feed_weight
                     ## state_msg update ##
                     self.state_msg['remains'] = round(self.feed_weight,3)
@@ -280,7 +278,7 @@ class Feeder_client:
                         #print('pidtest')
                         feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
                         feeding_pwm = 100
-                        # spreading_pwm = self.motor.spread_motor_distance2pwm(feeding_distance)
+                        # spreading_pwm = self.ML.spread_motor_distance2pwm(feeding_distance)
                         spreading_pwm = 0
                         if sim == True:
                             ## loadcell simulation ##
@@ -293,8 +291,8 @@ class Feeder_client:
                             if feeding_pwm == self.feeding_motor_pwm:
                                 pass
                             else:
-                                self.motor.supply_motor_pwm(feeding_pwm)
-                                self.motor.spread_motor_pwm(spreading_pwm)
+                                self.ML.supply_motor_pwm(feeding_pwm)
+                                self.ML.spread_motor_pwm(spreading_pwm)
                             
                         ## 현재 motor pwm 업데이트 ##
                         self.feeding_motor_pwm = feeding_pwm
@@ -321,8 +319,8 @@ class Feeder_client:
                         self.state_msg['spread_motor_output'] = self.spread_motor_pwm
                         self.feeding_cmd = False
                         if sim == False:
-                            self.motor.supply_motor_pwm(self.feeding_motor_pwm)
-                            self.motor.spread_motor_pwm(self.spread_motor_pwm)
+                            self.ML.supply_motor_pwm(self.feeding_motor_pwm)
+                            self.ML.spread_motor_pwm(self.spread_motor_pwm)
                         ## state_msg update ##
                         self.state_msg['event']['motor_state'] = 'stop'
                         ## feeding end log ##
@@ -356,7 +354,7 @@ class Feeder_client:
                 print('error in control event', e)
                 self.feeder_stop()
                 # if sim == False:
-                #     self.motor.terminate()
+                #     self.ML.terminate()
                 # if control_timer is not None:
                 #     control_timer.cancel()
                 print('control event terminated!')  
@@ -368,8 +366,8 @@ class Feeder_client:
         self.state_msg['feeding_motor_output'] = self.feeding_motor_pwm
         self.state_msg['spread_motor_output'] = self.spread_motor_pwm
         if sim == False:
-            self.motor.supply_motor_pwm(self.feeding_motor_pwm)
-            self.motor.spread_motor_pwm(self.spread_motor_pwm)
+            self.ML.supply_motor_pwm(self.feeding_motor_pwm)
+            self.ML.spread_motor_pwm(self.spread_motor_pwm)
         self.feed_cmd = False
         ## state_msg update ##
         self.state_msg['event']['motor_state'] = 'stop'
