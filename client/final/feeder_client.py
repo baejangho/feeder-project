@@ -227,8 +227,9 @@ class Feeder_client:
         self.cmd_socket.close()
     def LC_event(self):
         try:
-            feed_weight = self.ML.get_weight(20)/1000 # kg 단위
+            feed_weight = self.ML.get_weight(10)/1000 # kg 단위
             self.feed_weight = feed_weight
+            self.prev_feed_weight = self.feed_weight
             while True:
                 feed_weight = self.ML.get_weight(4)/1000 # kg 단위
                 print("real:",feed_weight)
