@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import RPi.GPIO as GPIO  # import GPIO
 from hx711 import HX711  # import the class HX711
+from rpi_hardware_pwm import HardwarePWM
+import numpy as np
 import time
 import json
 
