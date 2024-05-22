@@ -309,7 +309,7 @@ class Feeder_client:
                         self.state_msg['spread_motor_output'] = self.spread_motor_pwm
                         
                         ## PID제어를 위한 다음 desired weight 계산 ##
-                        if abs(self.desired_weight - target_weight) < 0.05:
+                        if abs(self.desired_weight - target_weight) < 0:
                             self.desired_weight = target_weight 
                         else:  
                             self.desired_weight = self.control.desired_weight_calc(dt, feeding_pace/1000, desired_weight/1000) # kg 단위
