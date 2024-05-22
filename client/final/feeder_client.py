@@ -240,6 +240,7 @@ class Feeder_client:
                     self.feed_weight = feed_weight
                 print("after:",round(self.feed_weight,3))
                 self.prev_feed_weight = self.feed_weight
+                self.state_msg['remains'] = round(self.feed_weight,2)
                 time.sleep(0.05)
         except:
             print('error in LC_event')
