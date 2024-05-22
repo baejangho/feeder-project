@@ -48,7 +48,8 @@ try:
     root.mainloop()
 except KeyboardInterrupt:
     print('사용자종료') 
-    Feeder_01.motor.terminate()
-    Feeder_01.loadcell.terminate()  
+    #Feeder_01.motor.terminate()
+    #Feeder_01.loadcell.terminate() 
+    Feeder_01.ML.terminate() 
     root.destroy()
     

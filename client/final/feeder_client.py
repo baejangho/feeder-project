@@ -353,8 +353,8 @@ class Feeder_client:
                 self.control_loop = False   # control loop 상태 변경(비활성)
                 print('error in control event', e)
                 self.feeder_stop()
-                # if sim == False:
-                #     self.ML.terminate()
+                if sim == False:
+                    self.ML.terminate()
                 # if control_timer is not None:
                 #     control_timer.cancel()
                 print('control event terminated!')  
