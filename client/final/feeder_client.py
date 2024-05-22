@@ -38,10 +38,11 @@ class Feeder_client:
         
         if sim == False:
             ## motor and loadcell parameter ##
-            self.ML = motor_loadcell.Loadcell()
+            self.ML = motor_loadcell.Motor_Loadcell()
             
         self.event = threading.Event()
         self.control_thread()
+        self.LC_thread()
         self.init_set()
         
     def initialize_socket(self):
