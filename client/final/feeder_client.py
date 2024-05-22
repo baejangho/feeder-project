@@ -282,9 +282,9 @@ class Feeder_client:
                         desired_weight = self.desired_weight * 1000 # g 단위
                         #print('pidtest')
                         feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
-                        feeding_pwm = 100
-                        # spreading_pwm = self.ML.spread_motor_distance2pwm(feeding_distance)
-                        spreading_pwm = 0
+                        # feeding_pwm = 100
+                        spreading_pwm = self.ML.spread_motor_distance2pwm(feeding_distance)
+                        # spreading_pwm = 0
                         if sim == True:
                             ## loadcell simulation ##
                             self.feed_weight = self.feed_weight - dt * feeding_pace / 1000   # kg 단위
