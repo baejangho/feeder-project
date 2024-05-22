@@ -237,9 +237,9 @@ class Feeder_client:
                     if feed_weight == 0:
                         self.feed_weight = self.prev_feed_weight
                     elif self.prev_feed_weight is not None:
-                        if feed_weight - self.prev_feed_weight > 2:
-                           self.feed_weight = feed_weight
-                        elif abs(self.prev_feed_weight - feed_weight) > 0.05:
+                        # if feed_weight - self.prev_feed_weight > 2:
+                        #    self.feed_weight = feed_weight
+                        if abs(self.prev_feed_weight - feed_weight) > 0.05:
                             self.feed_weight = self.prev_feed_weight
                         else:
                             self.feed_weight = feed_weight
