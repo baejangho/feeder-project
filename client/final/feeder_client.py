@@ -38,7 +38,7 @@ class Feeder_client:
         
         if sim == False:
             ## motor and loadcell parameter ##
-            self.ML = motor_loadcell.Motor_Loadcell()
+            self.ML = motor_loadcell.Loadcell()
             
         self.event = threading.Event()
         self.control_thread()
@@ -85,7 +85,12 @@ class Feeder_client:
     def control_thread(self):
         cmd_th = threading.Thread(target = self.control_event)
         cmd_th.daemon = True
-        cmd_th.start() 
+        cmd_th.start()
+    
+    def LC_thread(self):
+        LC_th = threading.Thread(target = self.LC_event)
+        LC_th.daemon = True
+        LC_th.start()
     
     def state_event(self):
         # 급이기 정보 server로 전달 #
@@ -219,12 +224,32 @@ class Feeder_client:
         print('cmd event : 서버와 연결이 끊어졌습니다')
         print('cmd event terminated!')
         self.cmd_socket.close()
-    
+    def LC_event(self):
+        try:
+            while True:
+                feed_weight = self.ML.get_weight(2)/1000 # kg 단위
+                print("real:",feed_weight)
+                if feed_weight == 0:
+                    self.feed_weight = self.prev_feed_weight
+                elif self.prev_feed_weight is not None:
+                    if abs(self.prev_feed_weight - feed_weight) > 0.1:
+                        self.feed_weight = self.prev_feed_weight
+                    else:
+                        self.feed_weight = feed_weight
+                else:
+                    self.feed_weight = feed_weight
+                print("after:",round(self.feed_weight,3))
+                self.prev_feed_weight = self.feed_weight
+                time.sleep(0.05)
+        except:
+            print('error in LC_event')
+            
+        
     def control_event(self):
         ## loop 시작 시간 ##
         # 0.1초 loop : 로드셀, pid 제어 진행
         dt = 0.2
-        duration = 0.1
+        #duration = 0.1
         while True:
             
             #print('control event')
@@ -237,29 +262,7 @@ class Feeder_client:
             
             try:
                 self.control_loop = True   # control loop 상태 변경(활성)   
-                if sim == False:
-                    if self.feeding_cmd == True: 
-                        ## Load_cell ##
-                        feed_weight = self.ML.get_weight(4)/1000 # kg 단위
-                        print("real:",feed_weight)
-                        if feed_weight == 0:
-                            self.feed_weight = self.prev_feed_weight
-                        elif self.prev_feed_weight is not None:
-                            if abs(self.prev_feed_weight - feed_weight) > 0.1:
-                                self.feed_weight = self.prev_feed_weight
-                            else:
-                                self.feed_weight = feed_weight
-                        else:
-                            self.feed_weight = feed_weight
-                        print("after:",round(self.feed_weight,3))
-                        
-                    else:
-                        feed_weight = self.ML.get_weight(4)/1000 # kg 단위
-                        self.feed_weight = feed_weight
-                    ## state_msg update ##
-                    self.state_msg['remains'] = round(self.feed_weight,3)
-                    self.prev_feed_weight = self.feed_weight
-                    
+                   
                 ## 제어 파라미터 ##
                 cur_weight = self.feed_weight * 1000 # g 단위
                 target_weight = self.target_weight * 1000 # g 단위
@@ -353,8 +356,8 @@ class Feeder_client:
                 self.control_loop = False   # control loop 상태 변경(비활성)
                 print('error in control event', e)
                 self.feeder_stop()
-                if sim == False:
-                    self.ML.terminate()
+                # if sim == False:
+                #     self.ML.terminate()
                 # if control_timer is not None:
                 #     control_timer.cancel()
                 print('control event terminated!')  
