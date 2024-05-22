@@ -38,7 +38,7 @@ class Feeder_client:
         
         if sim == False:
             ## motor and loadcell parameter ##
-            self.ML = motor_loadcell.Loadcell()
+            self.ML = motor_loadcell.Motor_Loadcell()
             
         self.event = threading.Event()
         self.control_thread()
