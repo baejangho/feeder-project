@@ -230,14 +230,14 @@ class Feeder_client:
             feed_weight = self.ML.get_weight(10)/1000 # kg 단위
             self.feed_weight = feed_weight
             while True:
-                feed_weight = self.ML.get_weight(2)/1000 # kg 단위
+                feed_weight = self.ML.get_weight(4)/1000 # kg 단위
                 print("real:",feed_weight)
                 if feed_weight == 0:
                     self.feed_weight = self.prev_feed_weight
                 elif self.prev_feed_weight is not None:
                     if feed_weight - self.prev_feed_weight > 1:
                         self.feed_weight = feed_weight
-                    elif abs(self.prev_feed_weight - feed_weight) > 0.1:
+                    elif abs(self.prev_feed_weight - feed_weight) > 0.05:
                         self.feed_weight = self.prev_feed_weight
                     else:
                         self.feed_weight = feed_weight
@@ -246,7 +246,7 @@ class Feeder_client:
                 print("after:",round(self.feed_weight,3))
                 self.prev_feed_weight = self.feed_weight
                 self.state_msg['remains'] = round(self.feed_weight,2)
-                time.sleep(0.05)
+                time.sleep(0.01)
         except:
             print('error in LC_event')
             
@@ -254,7 +254,7 @@ class Feeder_client:
     def control_event(self):
         ## loop 시작 시간 ##
         # 0.1초 loop : 로드셀, pid 제어 진행
-        dt = 0.2
+        dt = 0.4
         #duration = 0.1
         while True:
             
