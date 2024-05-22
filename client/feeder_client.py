@@ -35,6 +35,7 @@ class Feeder_client:
         self.previous_time = None
         self.prev_feed_weight = None
         self.control_loop = False
+        self.feeding_distance = 1.5
         
         if sim == False:
             ## loadcell parameter ##
@@ -278,9 +279,9 @@ class Feeder_client:
                         desired_weight = self.desired_weight * 1000 # g 단위
                         #print('pidtest')
                         feeding_pwm = self.control.calc(dt, desired_weight, cur_weight) # g 단위
-                        #feeding_pwm = 20
-                        spreading_pwm = self.dist2pwm(feeding_distance)
-                        #spreading_pwm = 30
+                        feeding_pwm = 100
+                        # spreading_pwm = self.motor.spread_motor_distance2pwm(feeding_distance)
+                        spreading_pwm = 0
                         if sim == True:
                             ## loadcell simulation ##
                             self.feed_weight = self.feed_weight - dt * feeding_pace / 1000   # kg 단위
@@ -354,8 +355,8 @@ class Feeder_client:
                 self.control_loop = False   # control loop 상태 변경(비활성)
                 print('error in control event', e)
                 self.feeder_stop()
-                if sim == False:
-                    self.motor.terminate()
+                # if sim == False:
+                #     self.motor.terminate()
                 # if control_timer is not None:
                 #     control_timer.cancel()
                 print('control event terminated!')  

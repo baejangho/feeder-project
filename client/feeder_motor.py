@@ -6,8 +6,8 @@ import numpy as np
 
 class Motor_control:
     def __init__(self):
-        #GPIO.cleanup()
-        #GPIO.setmode(GPIO.BCM)  # set GPIO pin mode to BCM numbering
+        # GPIO.cleanup()
+        GPIO.setmode(GPIO.BCM)  # set GPIO pin mode to BCM numbering
         GPIO.setup(5, GPIO.OUT)
         GPIO.setup(6, GPIO.OUT)
         GPIO.output(5, GPIO.HIGH)

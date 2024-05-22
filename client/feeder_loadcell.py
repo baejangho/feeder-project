@@ -6,7 +6,7 @@ import json
 
 class Loadcell:
     def __init__(self):
-        GPIO.cleanup()
+        #GPIO.cleanup()
         GPIO.setmode(GPIO.BCM)  # set GPIO pin mode to BCM numbering
         self.hx = HX711(dout_pin=23, pd_sck_pin=22, gain_channel_A=128, select_channel='A')  # create an object
         self.load_settings()  # 설정 불러오기      

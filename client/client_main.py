@@ -37,7 +37,7 @@ update_labels()
 
 def on_closing():
     print("Window is closing")
-    Feeder_01.motor.terminate()
+    #Feeder_01.motor.terminate()
     #Feeder_01.loadcell.terminate()  
     root.destroy()
 
@@ -49,6 +49,6 @@ try:
 except KeyboardInterrupt:
     print('사용자종료') 
     Feeder_01.motor.terminate()
-    #Feeder_01.loadcell.terminate()  
+    Feeder_01.loadcell.terminate()  
     root.destroy()
     
