@@ -227,13 +227,15 @@ class Feeder_client:
         self.cmd_socket.close()
     def LC_event(self):
         try:
+            feed_weight = self.ML.get_weight(10)/1000 # kg 단위
+            self.feed_weight = feed_weight
             while True:
                 feed_weight = self.ML.get_weight(2)/1000 # kg 단위
                 print("real:",feed_weight)
                 if feed_weight == 0:
                     self.feed_weight = self.prev_feed_weight
                 elif self.prev_feed_weight is not None:
-                    if abs(self.prev_feed_weight - feed_weight) > 0.5:
+                    if abs(self.prev_feed_weight - feed_weight) > 0.3:
                         self.feed_weight = self.prev_feed_weight
                     else:
                         self.feed_weight = feed_weight
