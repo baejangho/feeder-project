@@ -235,7 +235,7 @@ class Feeder_client:
                 if feed_weight == 0:
                     self.feed_weight = self.prev_feed_weight
                 elif self.prev_feed_weight is not None:
-                    if abs(self.prev_feed_weight - feed_weight) > 0.3:
+                    if abs(self.prev_feed_weight - feed_weight) > 0.1:
                         self.feed_weight = self.prev_feed_weight
                     else:
                         self.feed_weight = feed_weight
@@ -330,6 +330,7 @@ class Feeder_client:
                             self.ML.spread_motor_pwm(self.spread_motor_pwm)
                         ## state_msg update ##
                         self.state_msg['event']['motor_state'] = 'stop'
+                        self.state_msg['feeding_mode'] = 'stop'
                         ## feeding end log ##
                             # 코드 작성 필요   
 
