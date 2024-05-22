@@ -227,22 +227,23 @@ class Feeder_client:
         self.cmd_socket.close()
     def LC_event(self):
         try:
-            feed_weight = self.ML.get_weight(10)/1000 # kg 단위
+            feed_weight = self.ML.get_weight(20)/1000 # kg 단위
             self.feed_weight = feed_weight
             while True:
                 feed_weight = self.ML.get_weight(4)/1000 # kg 단위
                 print("real:",feed_weight)
-                if feed_weight == 0:
-                    self.feed_weight = self.prev_feed_weight
-                elif self.prev_feed_weight is not None:
-                    if feed_weight - self.prev_feed_weight > 1:
-                        self.feed_weight = feed_weight
-                    elif abs(self.prev_feed_weight - feed_weight) > 0.05:
+                if self.prev_feed_weight is not None:
+                    if feed_weight == 0:
                         self.feed_weight = self.prev_feed_weight
+                    elif self.prev_feed_weight is not None:
+                        #if feed_weight - self.prev_feed_weight > 2:
+                        #    self.feed_weight = feed_weight
+                        if abs(self.prev_feed_weight - feed_weight) > 0.05:
+                            self.feed_weight = self.prev_feed_weight
+                        else:
+                            self.feed_weight = feed_weight
                     else:
                         self.feed_weight = feed_weight
-                else:
-                    self.feed_weight = feed_weight
                 print("after:",round(self.feed_weight,3))
                 self.prev_feed_weight = self.feed_weight
                 self.state_msg['remains'] = round(self.feed_weight,2)

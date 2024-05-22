@@ -132,7 +132,7 @@ if __name__ == "__main__":
        #LC.set_scale_ratio_LC()
        while True:
            s_time = time.time()
-           LC.get_weight(8)
+           ML.get_weight(8)
            e_time = time.time()
            print('elaped time = ', e_time-s_time)
     except (KeyboardInterrupt, SystemExit):
@@ -140,4 +140,4 @@ if __name__ == "__main__":
 
     finally:
             
-        LC.terminate()
+        ML.terminate()
