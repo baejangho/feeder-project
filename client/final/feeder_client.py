@@ -227,7 +227,7 @@ class Feeder_client:
         self.cmd_socket.close()
     def LC_event(self):
         
-        feed_weight = self.ML.get_weight(10)/1000 # kg 단위
+        feed_weight = self.ML.get_weight(20)/1000 # kg 단위
         self.feed_weight = feed_weight
         self.prev_feed_weight = self.feed_weight
         while True:
@@ -240,7 +240,7 @@ class Feeder_client:
                     elif self.prev_feed_weight is not None:
                         # if feed_weight - self.prev_feed_weight > 2:
                         #    self.feed_weight = feed_weight
-                        if abs(self.prev_feed_weight - feed_weight) > 0.05:
+                        if abs(self.prev_feed_weight - feed_weight) > 0.1:
                             self.feed_weight = self.prev_feed_weight
                         else:
                             self.feed_weight = feed_weight
@@ -257,7 +257,7 @@ class Feeder_client:
     def control_event(self):
         ## loop 시작 시간 ##
         # 0.1초 loop : 로드셀, pid 제어 진행
-        dt = 0.4
+        dt = 0.2
         #duration = 0.1
         while True:
             
